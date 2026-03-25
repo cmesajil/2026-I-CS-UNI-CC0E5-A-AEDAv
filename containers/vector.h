@@ -1,17 +1,20 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
+#include <cstddef> // size_t
+#include "../types.h"
+
 class Vector{
 private:
-    int  m_capacity;
-    int  m_size;
-    int* m_data;
+    size_t  m_capacity;
+    size_t  m_size;
+    T1 * m_data;
 public:
-    Vector(int capacity);
+    Vector(size_t capacity);
     virtual ~Vector();
-    virtual void push_back(int value);
-    virtual int  get(int index);
-    virtual int  size();
+    virtual void push_back(T1 value);
+    virtual T1  get(size_t index);
+    virtual size_t  size();
 };
 
 void DemoVector();
