@@ -1,8 +1,8 @@
 # 1. Cuadros-Vargas, Ernesto <ecuadros@spc.org.pe>,
 Chipana Calderon, Guido
-Chowdhury Gomez, Junal
+Chowdhury Gomez, Junal <junal.chowdhury.g@uni.pe>
 Hinojosa Zamora, Frank
-Llanos Rosadio, Jose
+Llanos Rosadio, Jose Ismael <jose.llanos.r@uni.pe>
 Mesajil Lopez, Cristian
 Trujillo Armas, Andrei <andrei.trujillo.a@uni.pe>
-
+Azaña Vega, Luis <luisazanavega@gmail.com>
