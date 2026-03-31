@@ -15,16 +15,13 @@ Vector::~Vector(){
 }
 
 void Vector::push_back(T1 value){
-    if(m_size < m_capacity){
-        m_data[m_size] = value;
-        m_size++;
-    }
+    if(m_size < m_capacity)
+        m_data[m_size++] = value;
 }
 
 T1 Vector::get(size_t index){
-    if(index >= 0 && index < m_size){
+    if(index >= 0 && index < m_size)
         return m_data[index];
-    }
     return -1;
 }
 
