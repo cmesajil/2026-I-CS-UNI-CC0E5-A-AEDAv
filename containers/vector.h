@@ -57,15 +57,24 @@ size_t Vector<T>::size(){
 template <typename T>
 string Vector<T>::toString(){
     ostringstream oss;
-    for(size_t i = 0; i < m_size; ++i)
-        oss << m_data[i] << " ";
+    oss << "[";
+    for(size_t i = 0; i < m_size - 1; ++i)
+        oss << m_data[i] << ",";
+    if(m_size > 0)
+        oss << m_data[m_size - 1];
+    oss << "]";
     return oss.str();
 }
 
 template <typename T>
 ostream& operator<<(ostream& os, Vector<T>& v){
-    os << v.toString();
-    return os;
+    return os << v.toString();
+}
+
+// TODO: Implementar como PR
+template <typename T>
+istream& operator>>(istream& is, Vector<T>& v){
+    return is;
 }
 
 void DemoVector();
