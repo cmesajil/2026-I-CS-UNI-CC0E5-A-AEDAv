@@ -26,6 +26,22 @@ public:
     myself operator++()            { Parent::m_pNode++; return *this; }
 };
 
+template <typename Container>
+class vector_backward_iterator : public general_iterator<Container, vector_backward_iterator<Container>> {
+public:
+    using myself = vector_backward_iterator<Container>;
+    using Parent = general_iterator<Container, vector_backward_iterator<Container>>;
+public:
+    vector_backward_iterator(Container *pContainer, typename Parent::Node *pNode)
+        : Parent(pContainer, pNode) {}
+    vector_backward_iterator(myself &other) 
+          : Parent(other) {}
+    vector_backward_iterator(myself &&other) // Move constructor
+          : Parent(move(other)) {}
+
+    myself operator++()            { Parent::m_pNode--; return *this; }
+};
+
 template <typename T>
 class VectorNode{
     T   m_data;
@@ -67,15 +83,17 @@ ostream& operator<<(ostream& os, VectorNode<T>& node){
 template <typename T>
 class Vector{
 public:
-    using value_type = T;
-    using forward_iterator   = vector_forward_iterator< Vector<T> > ;
-    using Node               = VectorNode<T>;
+    using  value_type = T;
+    using  forward_iterator   = vector_forward_iterator < Vector<T> > ;
     friend forward_iterator;
+    using  backward_iterator  = vector_backward_iterator< Vector<T> > ;
+    friend backward_iterator;
+    using  Node               = VectorNode<T>;
 private:
     size_t  m_capacity;
     size_t  m_size;
     Node   *m_data;
-    void resize();
+    void    resize();
 public:
     Vector(size_t capacity = 10);
     virtual ~Vector();
@@ -87,9 +105,17 @@ public:
     forward_iterator begin() { return forward_iterator(this, m_data); }
     forward_iterator end()   { return forward_iterator(this, m_data + m_size); }
 
+    backward_iterator rbegin() { return backward_iterator(this, m_data + m_size - 1); }
+    backward_iterator rend()   { return backward_iterator(this, m_data - 1); }
+    
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&...  args){
         ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
+    }
+
+    template <typename Func, typename... Args>
+    void ReverseForEach(Func func, Args &&...  args){
+        ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
     }
 };
 

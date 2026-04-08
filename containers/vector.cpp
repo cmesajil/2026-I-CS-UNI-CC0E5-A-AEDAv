@@ -48,6 +48,10 @@ void DemoVector(){
     cout << "Imprimiendo desde adentro de Vector:" << endl;
     v1.ForEach(Add<T1>, 5);
     Print(v1, cout);
+    v1.ForEach(PrintX<T1>, cout, ", ");
+    cout << endl;
+    v1.ReverseForEach(PrintX<T1>, cout, ", ");
+    cout << endl;
 
     Print(v2, cout);
     ForEach(v2, Add<string>, string("XYZ"));

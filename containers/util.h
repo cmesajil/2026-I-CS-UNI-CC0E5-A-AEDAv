@@ -7,6 +7,11 @@ void Print(Container& c, ostream &os){
     os << c << endl;
 }
 
+template <typename T>
+void PrintX(T& elem, ostream &os, string sep){
+    os << elem << sep;
+}
+
 template <typename Container, typename Func>
 void ForEach(Container& c, Func func){
     for(auto it = c.begin(); it != c.end(); ++it)

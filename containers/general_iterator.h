@@ -28,9 +28,8 @@ public:
               m_pNode      = move(iter.m_pNode);
               return *(IteratorBase *)this; // Pending static_cast?
           }
-
-    bool operator==(const IteratorBase &iter)   { return m_pNode == iter.m_pNode; }
-    bool operator!=(const IteratorBase &iter)   { return m_pNode != iter.m_pNode; }
+    Node *getNode() const { return m_pNode; }
+    friend bool operator==(const IteratorBase &a, const IteratorBase &b) { return a.getNode() == b.getNode(); }
     typename Container::value_type &operator*(){
         return m_pNode->getDataRef();
     }
