@@ -65,7 +65,7 @@ public:
 };
 
 template <typename T> ostream &operator<<(ostream &os, VectorNode<T> &node) {
-  return os << "(" << node.getData() << ", " << node.getRef() << ")";
+  return os << "(" << node.getData() << " , " << node.getRef() << ")";
 }
 
 template <typename T> class Vector {
@@ -151,10 +151,11 @@ template <typename T> size_t Vector<T>::size() { return m_size; }
 template <typename T> string Vector<T>::toString() {
   ostringstream oss;
   oss << "[";
-  for (size_t i = 0; i < m_size - 1; ++i)
-    oss << m_data[i] << ",";
-  if (m_size > 0)
+  if (m_size > 0) {
+    for (size_t i = 0; i < m_size - 1; ++i)
+      oss << m_data[i] << ",";
     oss << m_data[m_size - 1];
+  }
   oss << "]";
   return oss.str();
 }
@@ -165,18 +166,41 @@ template <typename T> ostream &operator<<(ostream &os, Vector<T> &v) {
 
 // TODO: Implementar como PR
 template <typename T> istream &operator>>(istream &is, Vector<T> &v) {
-  size_t n;
-  cout << "Ingrese numero de pares: ";
-  is >> n;
-  cout << "Ingrese los pares: ";
-  T value;
-  Ref ref;
+  char ch;
+  is >> ch; // lee '['
+  if (!is || ch != '[')
+    return is;
 
-  for (size_t i = 0; i < n; ++i) {
-    is >> value >> ref;
-    v.push_back(value, ref);
+  if ((is >> ws).peek() == ']') {
+    is >> ch;
+    return is;
   }
 
+  while (true) {
+    char p1, p2, p3;
+    T data;
+    Ref ref;
+
+    // El formato de salida es (data, ref)
+    is >> p1; // '('
+    if (!is || p1 != '(')
+      break;
+
+    // Le delegamos al tipo T la abstracción de leerse a sí mismo.
+    // Asumimos que T y Ref pueden ser extraídos del stream.
+    is >> data >> p2 >> ref >> p3;
+
+    if (!is || p2 != ',' || p3 != ')')
+      break;
+
+    v.push_back(data, ref);
+
+    is >> ch; // lee ',' o ']'
+    if (ch == ']')
+      break;
+    if (ch != ',')
+      break;
+  }
   return is;
 }
 
