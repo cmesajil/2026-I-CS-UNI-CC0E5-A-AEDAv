@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <mutex>   // mutex
+#include <shared_mutex>
 #include "general_iterator.h"
 #include "util.h"
 #include "../types.h"
@@ -75,14 +76,14 @@ private:
     size_t  m_capacity;
     size_t  m_size;
     Node   *m_data;
-    mutex   m_mtx;
+    mutable shared_mutex m_mtx;
     void    resize();
 public:
     Vector(size_t capacity = 10);
     virtual ~Vector();
     virtual void push_back(value_type value, Ref ref);
-    virtual size_t size();
-    virtual string toString();
+    virtual size_t size() const;
+    virtual string toString() const;
 
     forward_iterator begin() { return forward_iterator(this, m_data); }
     forward_iterator end()   { return forward_iterator(this, m_data + m_size); }
@@ -93,12 +94,16 @@ public:
     // TODO: Agregar control concurrente
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&...  args){
+        unique_lock<shared_mutex> lock(m_mtx);
         ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
     }
 
     // TODO: Agregar control concurrente
     template <typename Func, typename... Args>
     void ReverseForEach(Func func, Args &&...  args){
+        unique_lock<shared_mutex> lock(m_mtx);
+        if(m_size == 0)
+            return;
         ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
     }
 };
@@ -127,31 +132,34 @@ void Vector<T>::resize(){
 
 template <typename T>
 void Vector<T>::push_back(value_type value, Ref ref){
-    scoped_lock lock(m_mtx);
+    unique_lock<shared_mutex> lock(m_mtx);
     if(m_size == m_capacity) // Overflow
         resize();
     m_data[m_size++] = Node(value, ref);
 }
 
 template <typename T>
-size_t Vector<T>::size(){
+size_t Vector<T>::size() const{
+    shared_lock<shared_mutex> lock(m_mtx);
     return m_size;
 }
 
 template <typename T>
-string Vector<T>::toString(){
+string Vector<T>::toString() const{
+    shared_lock<shared_mutex> lock(m_mtx);
     ostringstream oss;
     oss << "[";
-    for(size_t i = 0; i < m_size - 1; ++i)
-        oss << m_data[i] << ",";
-    if(m_size > 0)
-        oss << m_data[m_size - 1];
+    for(size_t i = 0; i < m_size; ++i){
+        if(i > 0)
+            oss << ",";
+        oss << m_data[i];
+    }
     oss << "]";
     return oss.str();
 }
 
 template <typename T>
-ostream& operator<<(ostream& os, Vector<T>& v){
+ostream& operator<<(ostream& os, const Vector<T>& v){
     return os << v.toString();
 }
 
