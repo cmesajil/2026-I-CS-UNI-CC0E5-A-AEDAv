@@ -1,7 +1,8 @@
 #include "linkedlist.h"
-#include "util.h"
 #include <fstream>
 #include <iostream>
+#include <thread>
+
 template <typename T> void Add(T &n, T value) { n += value; }
 
 void LinkedListDemo() {
@@ -54,4 +55,45 @@ void LinkedListDemo() {
   cout << list4 << endl;
 }
 
-void ListsDemo() { LinkedListDemo(); }
+void DemoConcurrentLinkedList() {
+  LinkedList<DescendingLinkedListTrait<int>> list;
+  list.insert(0, 15);
+  list.insert(0, 25);
+  list.insert(0, 35);
+  list.insert(0, 45);
+  list.insert(0, 55);
+  cout << list << endl;
+  // Cada thread itera el vector 100,000 veces e incrementa cada elemento
+  // Sin sincronizacion → race condition en los contadores
+  auto worker = [&list](int thread_id) {
+    for (int i = 0; i < 100000; i++)
+      list.ForEach(Add<T1>, 1);
+    cout << "Thread " << thread_id << " terminado\n";
+  };
+
+  thread t1(worker, 1);
+  thread t2(worker, 2);
+  thread t3(worker, 3);
+  thread t4(worker, 4);
+  thread t5(worker, 5);
+
+  t1.join();
+  t2.join();
+  t3.join();
+  t4.join();
+  t5.join();
+
+  // Resultado esperado sin race condition: 4 elementos * 100000 * 5 threads =
+  // 500000
+  cout << "Resultado (esperado 500000): " << list << endl;
+
+  // concurrencia de push pop , ... etc ,la idea es que salga un lista enlazada
+  // decidida
+  // LinkedList<DescendingLinkedListTrait<int>> list2;
+  // list2.insert(0, 15);
+}
+
+void ListsDemo() {
+  LinkedListDemo();
+  DemoConcurrentLinkedList();
+}

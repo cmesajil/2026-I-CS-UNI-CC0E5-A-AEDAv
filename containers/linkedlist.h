@@ -97,6 +97,7 @@ public:
   // DONE: Copy constructor
   LinkedList(const LinkedList &other)
       : m_pRoot(nullptr), m_tail(nullptr), m_size(0) {
+    shared_lock<shared_mutex> lock(other.m_mtx);
     Node *current = other.m_pRoot;
     while (current != nullptr) {
       this->push_back(current->getData(), current->getRef());
@@ -140,6 +141,7 @@ public:
   // virtual size_t  size() const;
   // DONE operator<<
   string toString() const {
+    shared_lock<shared_mutex> lock(m_mtx);
     Node *current = m_pRoot;
     ostringstream oss;
     oss << "[";
@@ -165,6 +167,7 @@ public:
 
   // DONE:operador[]
   value_type &operator[](Ref index) {
+    shared_lock<shared_mutex> lock(m_mtx);
     Node *iter = m_pRoot;
     while (iter != nullptr) {
       if (iter->getRef() == index)
@@ -178,6 +181,7 @@ public:
 
 // DONE:pop_front
 template <typename T> void LinkedList<T>::pop_front() {
+  unique_lock<shared_mutex> lock(m_mtx);
   if (m_pRoot == nullptr)
     return;
   Node *root_temp = m_pRoot;
@@ -192,6 +196,7 @@ template <typename T> void LinkedList<T>::pop_front() {
 
 // DONE:pop_back
 template <typename T> void LinkedList<T>::pop_back() {
+  unique_lock<shared_mutex> lock(m_mtx);
   if (m_pRoot == nullptr)
     return;
   // Caso lista con 1 solo elemento
@@ -216,6 +221,7 @@ template <typename T> void LinkedList<T>::pop_back() {
 // DONE:push_front
 template <typename T>
 void LinkedList<T>::push_front(value_type value, Ref ref) {
+  unique_lock<shared_mutex> lock(m_mtx);
   Node *root = new Node(value, ref, m_pRoot);
   m_pRoot = root;
   if (m_tail == nullptr) {
@@ -226,6 +232,7 @@ void LinkedList<T>::push_front(value_type value, Ref ref) {
 
 // DONE:push_back
 template <typename T> void LinkedList<T>::push_back(value_type value, Ref ref) {
+  unique_lock<shared_mutex> lock(m_mtx);
   Node *tail = new Node(value, ref, nullptr);
   if (m_pRoot == nullptr) {
     m_pRoot = tail;
@@ -254,6 +261,7 @@ void LinkedList<T>::internal_insert(Node *&pPrev, const value_type &value,
 
 template <typename T>
 void LinkedList<T>::insert(const value_type &value, Ref ref) {
+  unique_lock<shared_mutex> lock(m_mtx);
   internal_insert(m_pRoot, value, ref);
 }
 
