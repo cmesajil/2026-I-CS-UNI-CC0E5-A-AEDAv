@@ -21,7 +21,7 @@ void ForEach(Container& c, Func func){
 template <typename Iterator, typename Func, typename... Args>
 void ForEach(Iterator begin, Iterator end, Func func, Args&&... args){
     for(auto it = begin; it != end; ++it)
-        func(*it, forward<Args>(args)...);
+        func(*it, args...);
 }
 
 template <typename Container, typename Func, typename... Args>
