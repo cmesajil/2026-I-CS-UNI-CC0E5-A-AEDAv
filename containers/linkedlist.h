@@ -9,6 +9,7 @@
 #include "general_iterator.h"
 #include "util.h"
 #include "../types.h"
+#include "traits.h"
 using namespace std;
 
 // Forward iterator
@@ -24,9 +25,10 @@ class LinkedListForwardIterator : public general_iterator<Container, LinkedListF
 };
 
 // Linked List Node
-template <typename T>
+template <typename T, typename NodeType = LLNode<T>>
 class LLNode{
-    using Node = LLNode<T>;
+protected:
+    using Node = NodeType;
 private:
     T     m_data;
     Ref   m_ref;
