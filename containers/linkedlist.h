@@ -33,10 +33,10 @@ public:
 };
 
 // Linked List Node
-template <typename T, typename NodeType = LLNode<T>>
+template <typename T>
 class LLNode{
 protected:
-    using Node = NodeType;
+    using Node = LLNode<T>;
 private:
     T   m_data;
     Ref m_ref;

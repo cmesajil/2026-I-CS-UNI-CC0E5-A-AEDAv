@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
+#include <thread>      // Arregla el error de thread
+#include <vector>
 #include "../types.h"
 #include "linkedlist.h"
 // #include "doublelinkedlist.h"
@@ -29,11 +30,13 @@ void DemoList(Container& list, string fileName){
 }
 
 void LinkedListDemo(){
-    LinkedList<T1, AscendingLinkedListTrait<T1>> list;
+    LinkedList<AscendingLinkedListTrait<T1>> list;
     DemoList(list, "AscLL.txt");
-    LinkedList<T1, DescendingLinkedListTrait<T1>> list2;
+
+    LinkedList<DescendingLinkedListTrait<T1>> list2;
     DemoList(list2, "DescLL.txt");
 }
+
 
 void DoubleLinkedListDemo(){
     // DoubleLinkedList<T1, AscendingDLLTrait<T1>> list;
@@ -45,10 +48,9 @@ void DoubleLinkedListDemo(){
 void CircularLinkedListDemo(){
     
 }
-
-void CircularLinkedListDemo(){
-    
+void CircularDoubleLinkedListDemo(){
 }
+
 
 void ListsDemo(){
     LinkedListDemo();
@@ -59,15 +61,17 @@ void ListsDemo(){
 
 void TestConcurrencia() {
     cout << "\nTEST DE CONCURRENCIA" << endl;
+
+    // CORRECCIÓN: Plantilla correcta
     LinkedList<AscendingLinkedListTrait<T1>> list;
 
-    // 5 hilos van a intentar meter 1000 elementos cada uno al mismo tiempo
     auto worker = [&list](int thread_id) {
         for(int i = 0; i < 1000; i++) {
-            list.push_front(i, thread_id);
+            list.insert(i, thread_id);
         }
     };
 
+    // CORRECCIÓN: Los hilos se declaran y asignan correctamente
     thread t1(worker, 1);
     thread t2(worker, 2);
     thread t3(worker, 3);
@@ -103,9 +107,9 @@ void TestOperators() {
     // Probamos la excepcion del operator[] (Descomentar para probar)
     // cout << "Probando fuera de rango: " << list[5] << endl; // Lanzara la excepcion
 }
-void ListsDemo(){
-    TestBasicos();
-    TestConcurrencia();
-    TestOperators();
-    cout << "\n=== FIN DE LAS PRUEBAS ===" << endl;
-}
+//void ListsDemo(){
+    //TestBasicos();
+    //TestConcurrencia();
+    //TestOperators();
+    //cout << "\n=== FIN DE LAS PRUEBAS ===" << endl;
+//}
