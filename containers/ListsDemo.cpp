@@ -5,7 +5,7 @@
 #include <vector>
 #include "../types.h"
 #include "linkedlist.h"
-// #include "doublelinkedlist.h"
+#include "doublelinkedlist.h"
 // #include "circularlinkedlist.h"
 // #include "circularlinkedlist.h"
 
@@ -22,27 +22,32 @@ void DemoList(Container& list, string fileName){
     // Grabar la lista en un archivo
     ofstream os(fileName);
     os << list << endl;
-    
+    list.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
     // Leer la lista desde un archivo
     ifstream is(fileName);
     is >> list;
     cout << list << endl;
+
+
 }
 
 void LinkedListDemo(){
-    LinkedList<AscendingLinkedListTrait<T1>> list;
-    DemoList(list, "AscLL.txt");
+    //LinkedList<AscendingLinkedListTrait<T1>> list;
+    //DemoList(list, "AscLL.txt");
 
-    LinkedList<DescendingLinkedListTrait<T1>> list2;
-    DemoList(list2, "DescLL.txt");
+    //LinkedList<DescendingLinkedListTrait<T1>> list2;
+   // DemoList(list2, "DescLL.txt");
 }
 
 
 void DoubleLinkedListDemo(){
-    // DoubleLinkedList<T1, AscendingDLLTrait<T1>> list;
-    // DemoList(list, "AscDLL.txt");
-    // DoubleLinkedList<T1, DescendingDLLTrait<T1>> list2;
-    // DemoList(list2, "DescDLL.txt");
+    DoubleLinkedList<AscendingDLLTrait<T1>> list;
+    DemoList(list, "AscDLL.txt");
+    DoubleLinkedList<DescendingDLLTrait<T1>> list2;
+    DemoList(list2, "DescDLL.txt");
+    // 2. Prueba de caja blanca (estructura doble)
+
 }
 
 void CircularLinkedListDemo(){
@@ -53,10 +58,10 @@ void CircularDoubleLinkedListDemo(){
 
 
 void ListsDemo(){
-    LinkedListDemo();
-    CircularLinkedListDemo();
+    //LinkedListDemo();
+    //CircularLinkedListDemo();
     DoubleLinkedListDemo();
-    CircularDoubleLinkedListDemo();
+    //CircularDoubleLinkedListDemo();
 }
 
 void TestConcurrencia() {
