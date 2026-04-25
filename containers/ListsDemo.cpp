@@ -22,8 +22,7 @@ void DemoList(Container& list, string fileName){
     // Grabar la lista en un archivo
     ofstream os(fileName);
     os << list << endl;
-    list.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
-    list.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
     // Leer la lista desde un archivo
     ifstream is(fileName);
     is >> list;
@@ -47,7 +46,8 @@ void DoubleLinkedListDemo(){
     DoubleLinkedList<DescendingDLLTrait<T1>> list2;
     DemoList(list2, "DescDLL.txt");
     // 2. Prueba de caja blanca (estructura doble)
-
+    list.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
 }
 
 void CircularLinkedListDemo(){

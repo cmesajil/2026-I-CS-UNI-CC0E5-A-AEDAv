@@ -2,6 +2,38 @@
 
 #include "linkedlist.h"
 
+
+template <typename Container>
+class DoubleLinkedList_forward_iterator : public general_iterator<Container, DoubleLinkedList_forward_iterator<Container>> {
+public:
+    using MySelf = DoubleLinkedList_forward_iterator<Container>;
+    using Parent = general_iterator<Container, MySelf>;
+    using Parent::Parent;
+    MySelf& operator++() {
+        if (this->m_pNode) {
+            this->m_pNode = this->m_pNode->getNext();
+        }
+        return *this;
+    }
+};
+
+template <typename Container>
+class DoubleLinkedList_backward_iterator : public general_iterator<Container, DoubleLinkedList_backward_iterator<Container>> {
+public:
+    using MySelf = DoubleLinkedList_backward_iterator<Container>;
+    using Parent = general_iterator<Container, MySelf>;
+    using Parent::Parent;
+    MySelf& operator++() {
+        if (this->m_pNode) {
+            // Avanzar en el iterador significa retroceder en la lista
+            this->m_pNode = this->m_pNode->getPrev();
+        }
+        return *this;
+    }
+};
+
+
+
 // TODO Los iteradores ahora son forward y backward
 // Crear 2 nuevos i
 template <typename T>
@@ -86,6 +118,28 @@ public:
 
         // El m_tail ya se actualiza dentro de internal_insert,
         // no necesitamos el bucle manual de la clase base.
+    }
+
+    // Operadores I/O
+    friend istream& operator>>(istream& is, DoubleLinkedList& list) {
+        char ch;
+        if (!(is >> ch) || ch != '[') {
+            is.clear(ios_base::failbit);
+            return is;
+        }
+        value_type val;
+        Ref ref;
+        char comma, parenClose;
+        while (is >> ch && ch != ']') {
+            if (ch == '(') {
+                if (is >> val >> comma >> ref >> parenClose) {
+                    if (comma == ',' && parenClose == ')') {
+                        list.insert(val, ref);
+                    }
+                }
+            }
+        }
+        return is;
     }
 
     void printBackward() {
