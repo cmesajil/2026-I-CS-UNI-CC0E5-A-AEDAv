@@ -6,7 +6,7 @@
 #include "../types.h"
 #include "linkedlist.h"
 #include "doublelinkedlist.h"
-// #include "circularlinkedlist.h"
+#include "CircularLinkedList.h"
 // #include "circularlinkedlist.h"
 
 using namespace std;
@@ -37,17 +37,17 @@ void DemoList(Container& list, string fileName){
     cout << list << endl;
 
     cout <<"REVERSE FOREACH ADD 15" << endl;
-    list.ReverseForEach(Add<typename Container::value_type>,15);
-    cout << std::endl << std::endl;
+    //list.ReverseForEach(Add<typename Container::value_type>,15);
+   // cout << std::endl << std::endl;
 }
 
 void LinkedListDemo(){
-    //cout <<"DEMO lINKED lIST" << std::endl << std::endl;
-    //LinkedList<AscendingLinkedListTrait<T1>> list;
-    //DemoList(list, "AscLL.txt");
+    cout <<"DEMO lINKED lIST" << std::endl << std::endl;
+    LinkedList<AscendingLinkedListTrait<T1>> list;
+    DemoList(list, "AscLL.txt");
 
-    //LinkedList<DescendingLinkedListTrait<T1>> list2;
-   // DemoList(list2, "DescLL.txt");
+    LinkedList<DescendingLinkedListTrait<T1>> list2;
+    DemoList(list2, "DescLL.txt");
 }
 
 
@@ -68,7 +68,12 @@ void DoubleLinkedListDemo(){
 }
 
 void CircularLinkedListDemo(){
-    
+    //insercion ordenada
+    cout << "DEMO CIRCULAR LINKED LIST" << endl;
+    CircularLinkedList<AscendingCLLTrait<T1>>list;
+    DemoList(list, "AscCLL.txt");
+    CircularLinkedList<DescendingDLLTrait<T1>> list2;
+    DemoList(list2, "DesCLL.txt");
 }
 void CircularDoubleLinkedListDemo(){
 }
@@ -76,8 +81,8 @@ void CircularDoubleLinkedListDemo(){
 
 void ListsDemo(){
     LinkedListDemo();
-    //CircularLinkedListDemo();
-    DoubleLinkedListDemo();
+    CircularLinkedListDemo();
+    //DoubleLinkedListDemo();
     //CircularDoubleLinkedListDemo();
 }
 
