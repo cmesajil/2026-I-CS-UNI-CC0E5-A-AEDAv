@@ -10,6 +10,10 @@
 // #include "circularlinkedlist.h"
 
 using namespace std;
+template <typename T>
+void Add(T& n, T value){
+    n += value;
+}
 
 template <typename Container>
 void DemoList(Container& list, string fileName){
@@ -28,10 +32,17 @@ void DemoList(Container& list, string fileName){
     is >> list;
     cout << list << endl;
 
+    cout <<"FOR EACH ADD 5" << endl;
+    list.ForEach(Add<typename Container::value_type>,5);
+    cout << list << endl;
 
+    cout <<"REVERSE FOREACH ADD 15" << endl;
+    list.ReverseForEach(Add<typename Container::value_type>,15);
+    cout << std::endl << std::endl;
 }
 
 void LinkedListDemo(){
+    //cout <<"DEMO lINKED lIST" << std::endl << std::endl;
     //LinkedList<AscendingLinkedListTrait<T1>> list;
     //DemoList(list, "AscLL.txt");
 
@@ -41,13 +52,19 @@ void LinkedListDemo(){
 
 
 void DoubleLinkedListDemo(){
+    cout <<"DEMO DOUBLE lINKED lIST" << std::endl << std::endl;
     DoubleLinkedList<AscendingDLLTrait<T1>> list;
     DemoList(list, "AscDLL.txt");
     DoubleLinkedList<DescendingDLLTrait<T1>> list2;
     DemoList(list2, "DescDLL.txt");
     // 2. Prueba de caja blanca (estructura doble)
+    cout <<"PRUEBA DE ENLACES DOUBLE lINKED lIST" << endl;
     list.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
     list.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
+
+    cout << list << endl;
+
 }
 
 void CircularLinkedListDemo(){
@@ -58,7 +75,7 @@ void CircularDoubleLinkedListDemo(){
 
 
 void ListsDemo(){
-    //LinkedListDemo();
+    LinkedListDemo();
     //CircularLinkedListDemo();
     DoubleLinkedListDemo();
     //CircularDoubleLinkedListDemo();

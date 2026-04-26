@@ -65,10 +65,17 @@ struct DescendingDLLTrait : BaseTrait<T, greater<T>>{
 
 template <typename Trait>
 class DoubleLinkedList : public LinkedList<Trait>{
+
+public:
     // 1. Necesitas exponer los tipos del Trait para que el compilador los encuentre
     using Node = typename Trait::Node;
     using value_type = typename Trait::value_type;
-
+    using  forward_iterator   = DoubleLinkedList_forward_iterator < DoubleLinkedList<Trait> > ;
+    friend forward_iterator;
+    using  backward_iterator  = DoubleLinkedList_backward_iterator< DoubleLinkedList<Trait> > ;
+    friend backward_iterator;
+protected:
+    mutable shared_mutex m_mtx;
 private:
     // Helper: Versión adaptada para DLL
     void internal_insert(Node* &current, Node* prevNode, const value_type &value, Ref ref) {
@@ -108,6 +115,38 @@ private:
     }
 
 public:
+
+    forward_iterator begin() { return forward_iterator(this, this->m_pRoot); }
+    forward_iterator end()   { return forward_iterator(this, nullptr); }
+
+    backward_iterator rbegin() { return backward_iterator(this,this->m_tail); }
+    backward_iterator rend()   { return backward_iterator(this, nullptr); }
+
+    // Done: Agregar control concurrente
+    template <typename Func, typename... Args>
+    void ForEach(Func func, Args &&... args) {
+        std::unique_lock<std::shared_mutex> lock(m_mtx);
+
+        // El bucle de rango nativo utiliza begin() y end() automáticamente
+        for (auto& item : *this) {
+            func(item, std::forward<Args>(args)...);
+        }
+    }
+
+    // Done: Agregar control concurrente
+
+    template <typename Func, typename... Args>
+    void ReverseForEach(Func func, Args &&... args) {
+        std::unique_lock<std::shared_mutex> lock(m_mtx);
+
+        if (this->m_size == 0) return;
+
+        // Usamos el bucle manual con los iteradores inversos
+        for (auto it = rbegin(); it != rend(); ++it) {
+            // *it desreferencia el iterador para obtener el dato
+            func(*it, std::forward<Args>(args)...);
+        }
+    }
 
     // Sobreescribimos el insert principal
     void insert(const value_type &value, Ref ref) override {
