@@ -30,8 +30,6 @@ private:
     Node *m_start;
     bool  m_started;
 public:
-
-
     CLLForwardIterator(Container *pContainer, Node *pNode): Parent(pContainer, pNode), m_start(pNode), m_started(false) {}
     CLLForwardIterator(Container *pContainer, Node *pNode, bool sentinel): Parent(pContainer, pNode), m_start(nullptr), m_started(sentinel) {}
     //t5: operador++ forward
@@ -189,13 +187,12 @@ public:
             curr = next;
         }
 
-        // 3. REINICIAS ESTADOS
         this->m_pRoot = nullptr;
         this->m_tail  = nullptr;
         this->m_size  = 0;
     }
 
-    //t13: destructor seguro
+    //destructor seguro
     virtual ~CircularLinkedList() {
         clear();
     }
@@ -236,7 +233,7 @@ public:
 
 
 
-    //t17: pop front devuelve tupla (value, ref)
+    //pop front
     std::tuple<value_type, Ref> pop_front() override{
         unique_lock<shared_mutex> lock(m_mtx);
         if (!this->m_pRoot) throw runtime_error("La lista esta vacia");
@@ -287,11 +284,7 @@ public:
         return act->getDataRef();
     }
 
-    //t20: size
-    size_t size() const override{
-        shared_lock<shared_mutex> lock(m_mtx);
-        return this->m_size;
-    }
+
 
     friend ostream &operator<<(ostream &os, const CircularLinkedList<Trait> &list){
         // Usamos el objeto 'list' pasado por parámetro para bloquear el mutex
@@ -331,6 +324,11 @@ public:
                         list.insert(val, ref);
         is.ignore(numeric_limits<streamsize>::max(), '\n');
         return is;
+    }
+
+    size_t size() const override{
+        shared_lock<shared_mutex> lock(m_mtx);
+        return this->m_size;
     }
 };
 

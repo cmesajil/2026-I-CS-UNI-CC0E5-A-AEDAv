@@ -36,7 +36,22 @@ void DemoList(Container& list, string fileName){
     list.ForEach(Add<typename Container::value_type>,5);
     cout << list << endl;
 
-    cout <<"REVERSE FOREACH ADD 15" << endl;
+    cout <<"PUSH FRONT" << endl;
+    list.push_front(1,1);
+    cout << list << endl;
+    cout <<"PUSH BACK" << endl;
+    list.push_back(9,9);
+    cout << list << endl;
+    cout <<"POP FRONT" << endl;
+    list.pop_front();
+    cout << list << endl;
+    cout <<"POP BACK" << endl;
+    list.pop_back();
+    cout << list << endl;
+
+
+
+    //cout <<"REVERSE FOREACH ADD 15" << endl;
     //list.ReverseForEach(Add<typename Container::value_type>,15);
    // cout << std::endl << std::endl;
 }
@@ -48,6 +63,7 @@ void LinkedListDemo(){
 
     LinkedList<DescendingLinkedListTrait<T1>> list2;
     DemoList(list2, "DescLL.txt");
+    //destructor
 }
 
 
@@ -62,14 +78,45 @@ void DoubleLinkedListDemo(){
     list.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
     list.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
 
-
     cout << list << endl;
+    cout <<"PRUEBA DE COPY CONSTRUCTOR DOUBLE lINKED lIST" << endl;
+    DoubleLinkedList<AscendingDLLTrait<T1>> list3=list;
+    cout << list3 << endl;
+    list3.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list3.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
+
+    cout <<"PRUEBA DE MOVE CONSTRUCTOR DOUBLE lINKED lIST" << endl;
+    DoubleLinkedList<AscendingDLLTrait<T1>> list4=std::move(list);
+    cout << list4 << endl;
+    list4.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list4.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
+    cout << "LIST VACIO?: "<<list << endl;
+
+
+    cout <<"PRUEBA DE COPY ASSIGMENT DOUBLE lINKED lIST" << endl;
+    DoubleLinkedList<AscendingDLLTrait<T1>> list5;
+    list5=list4;
+    cout << list5 << endl;
+    list5.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list5.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
+    cout << "LIST4 VACIO?: "<<list4 << endl;
+
+    cout <<"PRUEBA DE COPY ASSIGMENT DOUBLE lINKED lIST" << endl;
+    list5=std::move(list4);;
+    cout << list5 << endl;
+    list5.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
+    list5.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
+
+    cout << "LIST4 VACIO?: "<<list4 << endl;
 
 }
 
 void CircularLinkedListDemo(){
     //insercion ordenada
-    cout << "DEMO CIRCULAR LINKED LIST" << endl;
+    cout << "DEMO CIRCULAR LINKED LIST" << endl<< endl;
     CircularLinkedList<AscendingCLLTrait<T1>>list;
     DemoList(list, "AscCLL.txt");
     CircularLinkedList<DescendingDLLTrait<T1>> list2;
@@ -80,9 +127,9 @@ void CircularDoubleLinkedListDemo(){
 
 
 void ListsDemo(){
-    LinkedListDemo();
-    CircularLinkedListDemo();
-    //DoubleLinkedListDemo();
+    //LinkedListDemo();
+    //CircularLinkedListDemo();
+    DoubleLinkedListDemo();
     //CircularDoubleLinkedListDemo();
 }
 

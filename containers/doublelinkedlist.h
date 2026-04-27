@@ -1,7 +1,7 @@
 
 
 #include "linkedlist.h"
-
+// DONE Los iteradores ahora son forward y backward
 
 template <typename Container>
 class DoubleLinkedList_forward_iterator : public general_iterator<Container, DoubleLinkedList_forward_iterator<Container>> {
@@ -34,8 +34,6 @@ public:
 
 
 
-// TODO Los iteradores ahora son forward y backward
-// Crear 2 nuevos i
 template <typename T>
 class DLLNode : public LLNode<T, DLLNode<T>>{
     using Base = LLNode<T, DLLNode<T>>;
@@ -67,15 +65,14 @@ template <typename Trait>
 class DoubleLinkedList : public LinkedList<Trait>{
 
 public:
-    // 1. Necesitas exponer los tipos del Trait para que el compilador los encuentre
+
     using Node = typename Trait::Node;
     using value_type = typename Trait::value_type;
     using  forward_iterator   = DoubleLinkedList_forward_iterator < DoubleLinkedList<Trait> > ;
     friend forward_iterator;
     using  backward_iterator  = DoubleLinkedList_backward_iterator< DoubleLinkedList<Trait> > ;
     friend backward_iterator;
-protected:
-    mutable shared_mutex m_mtx;
+
 private:
     // Helper: Versión adaptada para DLL
     void internal_insert(Node* &current, Node* prevNode, const value_type &value, Ref ref) {
@@ -125,7 +122,7 @@ public:
     // Done: Agregar control concurrente
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&... args) {
-        std::unique_lock<std::shared_mutex> lock(m_mtx);
+        std::unique_lock<std::shared_mutex> lock(this->m_mtx);
 
         // El bucle de rango nativo utiliza begin() y end() automáticamente
         for (auto& item : *this) {
@@ -137,7 +134,7 @@ public:
 
     template <typename Func, typename... Args>
     void ReverseForEach(Func func, Args &&... args) {
-        std::unique_lock<std::shared_mutex> lock(m_mtx);
+        std::unique_lock<std::shared_mutex> lock(this->m_mtx);
 
         if (this->m_size == 0) return;
 
@@ -158,6 +155,87 @@ public:
         // El m_tail ya se actualiza dentro de internal_insert,
         // no necesitamos el bucle manual de la clase base.
     }
+
+
+
+    void printBackward() {
+        std::shared_lock<std::shared_mutex> lock(this->m_mtx);
+        Node* current = this->m_tail;
+        std::cout << "Recorrido inverso: ";
+        while (current != nullptr) {
+            std::cout << current->getData() << " ";
+            current = current->getPrev(); // Aquí está la prueba de fuego
+        }
+        std::cout << std::endl;
+    }
+
+    DoubleLinkedList() : LinkedList<Trait>() {}
+    // DONE : Copy constructor
+    //       Simplificar y abstraer el bucle de copia de Nodes
+    //       Es posible que no necesites este constructor ya que lo heredaste
+    DoubleLinkedList(const DoubleLinkedList &other): LinkedList<Trait>(){
+        shared_lock<shared_mutex> lock(other.m_mtx);
+        for (Node *c = other.m_pRoot; c != nullptr; c = c->getNext())
+            push_back(c->getData(), c->getRef());
+    }
+    // DONE: Move constructor
+
+    DoubleLinkedList(DoubleLinkedList &&other): LinkedList<Trait>(){
+        unique_lock<shared_mutex> lock(other.m_mtx);
+        this->m_pRoot = std::exchange(other.m_pRoot, nullptr);
+        this->m_tail  = std::exchange(other.m_tail,  nullptr);
+        this->m_size  = std::exchange(other.m_size,  0);
+    }
+
+    // DONE: Copy assignment operator
+    DoubleLinkedList &operator=(const DoubleLinkedList &other){
+        if (this != &other){
+            clear();
+            shared_lock<shared_mutex> lock(other.m_mtx);
+            for (Node *c = other.m_pRoot; c != nullptr; c = c->getNext())
+                push_back(c->getData(), c->getRef());
+        }
+        return *this;
+    }
+    // DONE: Move assignment operator
+    DoubleLinkedList &operator=(DoubleLinkedList &&other){
+        if (this != &other){
+            clear();
+            unique_lock<shared_mutex> lock(other.m_mtx);
+            this->m_pRoot = std::exchange(other.m_pRoot, nullptr);
+            this->m_tail  = std::exchange(other.m_tail,  nullptr);
+            this->m_size  = std::exchange(other.m_size,  0);
+        }
+        return *this;
+    }
+
+
+    //push back
+    void push_back(value_type value, Ref ref) override{
+        unique_lock<shared_mutex> lock(this->m_mtx);
+        Node *newNode = new Node(value, ref, nullptr, this->m_tail);
+        if (this->m_tail) this->m_tail->setNext(newNode);
+        else        this->m_pRoot = newNode;
+        this->m_tail = newNode;
+        this->m_size++;
+    }
+
+
+
+    virtual ~DoubleLinkedList() { clear(); }
+    void clear(){
+        unique_lock<shared_mutex> lock(this->m_mtx);
+        Node *act = this->m_pRoot;
+        while (act) {
+            Node *next = act->getNext();
+            delete act;
+            act = next;
+        }
+        this->m_pRoot = nullptr;
+        this->m_tail  = nullptr;
+        this->m_size  = 0;
+    }
+
 
     // Operadores I/O
     friend istream& operator>>(istream& is, DoubleLinkedList& list) {
@@ -181,25 +259,10 @@ public:
         return is;
     }
 
-    void printBackward() {
-        std::shared_lock<std::shared_mutex> lock(this->m_mtx);
-        Node* current = this->m_tail;
-        std::cout << "Recorrido inverso: ";
-        while (current != nullptr) {
-            std::cout << current->getData() << " ";
-            current = current->getPrev(); // Aquí está la prueba de fuego
-        }
-        std::cout << std::endl;
-    }
-    // TODO: Copy constructor
-    //       Simplificar y abstraer el bucle de copia de Nodes
-    //       Es posible que no necesites este constructor ya que lo heredaste
-
-    // TODO: Move constructor
-    // TODO: Copy assignment operator
-    // TODO: Move assignment operator
-
     virtual void verifyLinks();
+
+
+
 
 };
 
