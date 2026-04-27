@@ -24,7 +24,7 @@ public:
     using Parent = general_iterator<Container, MySelf>;
     using Parent::Parent;
 
-    MySelf operator++() {
+    MySelf& operator++() {
         if (this->m_pNode) {
             this->m_pNode = this->m_pNode->getNext();
         }

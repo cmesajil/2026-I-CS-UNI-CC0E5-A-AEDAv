@@ -101,9 +101,6 @@ public:
 
         typename Trait::value_type val;
 
-        // CORRECCIÓN PARA EL ERROR "Ref":
-        // Si no quieres tocar tus Traits, usa el tipo que sabes que almacenas (ej. int)
-        // O mira si Trait tiene el tipo explícito. Aquí usaremos 'int' para evitar el error:
         int ref_temporal;
 
         char comma, parenClose;

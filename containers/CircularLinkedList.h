@@ -33,7 +33,7 @@ public:
     CLLForwardIterator(Container *pContainer, Node *pNode): Parent(pContainer, pNode), m_start(pNode), m_started(false) {}
     CLLForwardIterator(Container *pContainer, Node *pNode, bool sentinel): Parent(pContainer, pNode), m_start(nullptr), m_started(sentinel) {}
     //t5: operador++ forward
-    MySelf operator++(){
+    MySelf& operator++(){
         if (this->m_pNode){
             m_started      = true;
             this->m_pNode  = this->m_pNode->getNext();

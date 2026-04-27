@@ -75,21 +75,14 @@ public:
     friend backward_iterator;
 
 private:
-    // Helper: Versión adaptada para DLL
+
     void internal_insert(Node* &current, Node* prevNode, const value_type &value, Ref ref) {
         // Caso base: hemos llegado al final o al punto donde el valor es menor/mayor
         if (!current || this->m_comp(value, current->getDataRef())) {
 
             // 1. Crear nuevo nodo: next = current, prev = prevNode
             Node* newNode = new Node(value, ref, current, prevNode);
-            // --- DEBUG ---
-            std::cout << "Insertando: " << value;
-            if (prevNode) std::cout << " (Prev: " << prevNode->getData() << ")";
-            else std::cout << " (Prev: NULL)";
-            if (current) std::cout << " (Next: " << current->getData() << ")";
-            else std::cout << " (Next: NULL)";
-            std::cout << std::endl;
-            // --------------
+
             // 2. Si el nodo actual existe, su 'prev' debe apuntar al nuevo
             if (current != nullptr) {
                 current->setPrev(newNode);
@@ -157,18 +150,6 @@ public:
         // no necesitamos el bucle manual de la clase base.
     }
 
-
-
-    void printBackward() {
-        std::shared_lock<std::shared_mutex> lock(this->m_mtx);
-        Node* current = this->m_tail;
-        std::cout << "Recorrido inverso: ";
-        while (current != nullptr) {
-            std::cout << current->getData() << " ";
-            current = current->getPrev(); // Aquí está la prueba de fuego
-        }
-        std::cout << std::endl;
-    }
 
     DoubleLinkedList() : LinkedList<Trait>() {}
     // DONE : Copy constructor
@@ -260,30 +241,11 @@ public:
         return is;
     }
 
-    virtual void verifyLinks();
-
 
 
 
 };
 
-template <typename Trait>
-void DoubleLinkedList<Trait>::verifyLinks() {
-    std::shared_lock<std::shared_mutex> lock(this->m_mtx);
-    Node* current = this->m_pRoot;
 
-    while (current != nullptr && current->getNext() != nullptr) {
-        Node* nextNode = current->getNext();
-
-        // Verificación crítica: ¿El prev del siguiente es el actual?
-        if (nextNode->getPrev() != current) {
-            std::cerr << "¡ERROR ESTRUCTURAL! El enlace es inconsistente en el valor: "
-            << current->getData() << std::endl;
-            return;
-        }
-        current = nextNode;
-    }
-    std::cout << "Estructura doblemente enlazada verificada: OK" << std::endl;
-}
 
 #endif
