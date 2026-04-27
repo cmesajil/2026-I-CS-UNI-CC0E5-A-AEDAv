@@ -5,7 +5,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <iostream>
-
+#include "../types.h"
 // NOTA: Mueve tus structs de Traits a un archivo llamado "CircularTraits.h"
 // para evitar el error de redefinición que te dio el compilador.
 
@@ -28,6 +28,7 @@ public:
     using Node       = typename Trait::Node;
     using Comp       = typename Trait::Comp;
     using MySelf     = CircularDoubleLinkedList<Trait>;
+
 
 private:
     // Internal insert (debe ser privado para que nadie toque los punteros directamente)
@@ -92,24 +93,21 @@ public:
         return os;
     }
 
-    friend std::istream& operator>>(std::istream& is, CircularDoubleLinkedList<Trait>& list) {
+    friend std::istream& operator>>(std::istream& is, CircularDoubleLinkedList& list) {
         char ch;
         if (!(is >> ch) || ch != '[') {
             is.clear(std::ios_base::failbit);
             return is;
         }
-
-        typename Trait::value_type val;
-
-        int ref_temporal;
-
+        value_type val;
+        Ref ref;
         char comma, parenClose;
-
         while (is >> ch && ch != ']') {
             if (ch == '(') {
-                if (is >> val >> comma >> ref_temporal >> parenClose) {
+                // Nota: Esto funcionará para cualquier tipo que soporte >>
+                if (is >> val >> comma >> ref >> parenClose) {
                     if (comma == ',' && parenClose == ')') {
-                        list.insert(val, ref_temporal);
+                        list.insert(val, ref);
                     }
                 }
             }
