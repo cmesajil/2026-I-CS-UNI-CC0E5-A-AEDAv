@@ -7,6 +7,7 @@
 #include "linkedlist.h"
 #include "doublelinkedlist.h"
 #include "CircularLinkedList.h"
+#include "CircularDoubleLinkedList.h"
 // #include "circularlinkedlist.h"
 
 using namespace std;
@@ -31,7 +32,7 @@ void DemoList(Container& list, string fileName){
     ifstream is(fileName);
     is >> list;
     cout << list << endl;
-
+/*
     cout <<"FOR EACH ADD 5" << endl;
     list.ForEach(Add<typename Container::value_type>,5);
     cout << list << endl;
@@ -50,7 +51,7 @@ void DemoList(Container& list, string fileName){
     cout << list << endl;
 
 
-
+*/
     //cout <<"REVERSE FOREACH ADD 15" << endl;
     //list.ReverseForEach(Add<typename Container::value_type>,15);
    // cout << std::endl << std::endl;
@@ -80,7 +81,7 @@ void DoubleLinkedListDemo(){
 
     cout << list << endl;
     cout <<"PRUEBA DE COPY CONSTRUCTOR DOUBLE lINKED lIST" << endl;
-    DoubleLinkedList<AscendingDLLTrait<T1>> list3=list;
+    DoubleLinkedList<AscendingDLLTrait<T1>> list3 = list;
     cout << list3 << endl;
     list3.printBackward(); // Si esto funciona, tu lista es realmente 'doble'
     list3.verifyLinks();   // Si esto no imprime error, tu lógica de punteros es perfecta
@@ -119,18 +120,23 @@ void CircularLinkedListDemo(){
     cout << "DEMO CIRCULAR LINKED LIST" << endl<< endl;
     CircularLinkedList<AscendingCLLTrait<T1>>list;
     DemoList(list, "AscCLL.txt");
-    CircularLinkedList<DescendingDLLTrait<T1>> list2;
+    CircularLinkedList<DescendingCLLTrait<T1>> list2;
     DemoList(list2, "DesCLL.txt");
 }
 void CircularDoubleLinkedListDemo(){
+    cout << "DEMO CIRCULAR DOUBLE LINKED LIST" << endl<< endl;
+    CircularDoubleLinkedList<AscendingCDLLTrait<T1>>list;
+    DemoList(list, "AscCLL.txt");
+    CircularDoubleLinkedList<DescendingCDLLTrait<T1>> list2;
+    DemoList(list2, "DesCLL.txt");
 }
 
 
 void ListsDemo(){
     //LinkedListDemo();
     //CircularLinkedListDemo();
-    DoubleLinkedListDemo();
-    //CircularDoubleLinkedListDemo();
+    //DoubleLinkedListDemo();
+    CircularDoubleLinkedListDemo();
 }
 
 void TestConcurrencia() {

@@ -16,7 +16,7 @@ struct AscendingCLLTrait : BaseTrait<T, less<T>> {
 
 template <typename T>
 struct DescendingCLLTrait : BaseTrait<T, greater<T>> {
-    using Node = DLLNode<T>;
+    using Node = LLNode<T>;
 };
 
 //iterator

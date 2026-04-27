@@ -1,4 +1,5 @@
-
+#ifndef DOUBLELINKEDLIST_H
+#define DOUBLELINKEDLIST_H
 
 #include "linkedlist.h"
 // DONE Los iteradores ahora son forward y backward
@@ -284,3 +285,5 @@ void DoubleLinkedList<Trait>::verifyLinks() {
     }
     std::cout << "Estructura doblemente enlazada verificada: OK" << std::endl;
 }
+
+#endif
