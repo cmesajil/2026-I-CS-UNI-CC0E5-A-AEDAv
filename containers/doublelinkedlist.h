@@ -240,7 +240,16 @@ public:
         }
         return is;
     }
-
+    friend ostream& operator<<(ostream& os, const DoubleLinkedList<Trait>& list) {
+        shared_lock<shared_mutex> lock(list.m_mtx);
+        os << "[";
+        for (Node* curr = list.m_pRoot; curr != nullptr; curr = curr->getNext()) {
+            os << "(" << curr->getData() << "," << curr->getRef() << ")";
+            if (curr->getNext()) os << ",";
+        }
+        os << "]";
+        return os;
+    }
 
 
 
