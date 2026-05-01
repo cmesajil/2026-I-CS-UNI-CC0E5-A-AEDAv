@@ -155,24 +155,14 @@ public:
         return *this;
     }
 
-    void clear(){
-        unique_lock<shared_mutex> lock(m_mtx);
-        if (!this->m_pRoot) return;
 
+    void clear() {
 
-        this->m_tail->setNext(nullptr);
-
-
-        Node *curr = this->m_pRoot;
-        while (curr){
-            Node *next = curr->getNext();
-            delete curr;
-            curr = next;
+        if (this->m_tail) {
+            this->m_tail->setNext(nullptr); //  romper ciclo
         }
 
-        this->m_pRoot = nullptr;
-        this->m_tail  = nullptr;
-        this->m_size  = 0;
+        LinkedList<Trait>::clear();   // reutilizas base
     }
 
     //destructor seguro
