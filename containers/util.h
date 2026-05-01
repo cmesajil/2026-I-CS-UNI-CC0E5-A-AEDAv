@@ -30,4 +30,17 @@ void ForEach(Container& container, Func func, Args&&... args){
     ForEach(container.begin(), container.end(),
             func, forward<Args>(args)...);
 }
+
+template <typename List>
+void print_list(std::ostream& os, const List& list) {
+    auto it = list.begin();
+    auto end = list.end();
+
+    while (it != end) {
+        os << *it;
+        ++it;
+        if (it != end)
+            os << ", ";
+    }
+}
 #endif

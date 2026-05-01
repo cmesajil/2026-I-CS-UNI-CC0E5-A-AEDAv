@@ -53,51 +53,20 @@ public:
     using MySelf           = CircularLinkedList<Trait>;
     using forward_iterator = CLLForwardIterator<MySelf>;
     friend forward_iterator;
+    using const_iterator = CLLForwardIterator<const LinkedList<Trait>>;
+    friend const_iterator;
+
 private:
     mutable shared_mutex m_mtx;
-    //DONE internal insert
-    void internal_insert(const value_type &value, Ref ref){
-        Node *newNode = new Node(value, ref);
-        this->m_size++;
 
-        // Caso 1: Lista circular vacía
-        if (!this->m_pRoot){
-            newNode->setNext(newNode);
-            this->m_pRoot = newNode;
-            this->m_tail  = newNode;
-            return;
-        }
-
-        // Caso 2: Nuevo valor va antes del root
-        if (this->m_comp(value, this->m_pRoot->getDataRef())){
-            newNode->setNext(this->m_pRoot);
-            this->m_tail->setNext(newNode);
-            this->m_pRoot = newNode;
-            return;
-        }
-
-        // Caso general: Buscar el slot
-        Node *act = this->m_pRoot;
-
-        // Mientras no lleguemos al final y el siguiente elemento sea menor al nuevo valor
-        while (act->getNext() != this->m_pRoot && !this->m_comp(value, act->getNext()->getDataRef())){
-            act = act->getNext();
-        }
-
-        newNode->setNext(act->getNext());
-        act->setNext(newNode);
-
-        // Si insertamos al final, actualizamos m_tail
-        if (act == this->m_tail) {
-            this->m_tail = newNode;
-        }
-    }
 
 public:
 
     //iteradores
     forward_iterator begin() { return forward_iterator(this, this->m_pRoot); }
     forward_iterator end()   { return forward_iterator(this, nullptr, true); }
+    const_iterator begin() const { return const_iterator(this, this->m_pRoot); }
+    const_iterator end()   const { return const_iterator(this, nullptr); }
 
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&...args){
@@ -107,14 +76,30 @@ public:
             func(item, std::forward<Args>(args)...);
     }
 
-
+    //DONE : insert reutilizando LinkedList<Trait>::insert
     void insert(const value_type &value, Ref ref) override{
-        unique_lock<shared_mutex> lock(m_mtx);
-        internal_insert(value, ref);
+        shared_lock<shared_mutex> lock(m_mtx);
+        // Caso lista vacía
+           if (!this->m_pRoot) {
+               LinkedList<Trait>::insert(value, ref);
+               this->m_tail->setNext(this->m_pRoot);
+               return;
+           }
+
+           // 1. romper circularidad
+           this->m_tail->setNext(nullptr);
+
+           // 2. usar insert base
+           LinkedList<Trait>::insert(value, ref);
+
+           // 3. restaurar circularidad
+           this->m_tail->setNext(this->m_pRoot);
+
     }
 
     //constructores
-    CircularLinkedList() : LinkedList<Trait>() {}
+    CircularLinkedList() : LinkedList<Trait>() {
+    }
 
 
     //copy constructor
@@ -212,7 +197,7 @@ public:
         this->m_size++;
     }
 
-    // push_back
+    // reutiliza push_back
     void push_back(value_type value, Ref ref) override {
         unique_lock<shared_mutex> lock(this->m_mtx);
         Node* newNode = new Node(value, ref);
@@ -284,25 +269,12 @@ public:
 
 
 
-    friend ostream &operator<<(ostream &os, const CircularLinkedList<Trait> &list){
-        // Usamos el objeto 'list' pasado por parámetro para bloquear el mutex
-        shared_lock<shared_mutex> lock(list.m_mtx);
+    friend std::ostream& operator<<(std::ostream& os, const CircularLinkedList& list) {
+        std::shared_lock<std::shared_mutex> lock(list.m_mtx);
 
         os << "[";
-        // Usamos 'list.m_pRoot' en lugar de 'this->m_pRoot'
-        if (list.m_pRoot){
-            Node *act = list.m_pRoot;
-            do {
-                os << "(" << act->getData() << "," << act->getRef() << ")";
-                act = act->getNext();
-                if (act != list.m_pRoot) os << ",";
-            } while (act != list.m_pRoot);
-        }
+        print_list(os, list);
         os << "]";
-
-        if (list.m_pRoot)
-            os << " ->root(" << list.m_pRoot->getData()<< "," << list.m_pRoot->getRef() << ")";
-
         return os;
     }
 

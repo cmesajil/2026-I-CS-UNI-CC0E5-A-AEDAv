@@ -78,6 +78,8 @@ public:
 
     using forward_iterator = LinkedListForwardIterator<MySelf>;
     friend forward_iterator;
+    using const_iterator = LinkedListForwardIterator<const LinkedList<Trait>>;
+    friend const_iterator;
 
 protected:
     Node *m_pRoot = nullptr;
@@ -156,7 +158,8 @@ public:
 
     forward_iterator begin() { return forward_iterator(this, m_pRoot); }
     forward_iterator end()   { return forward_iterator(this, nullptr); }
-
+    const_iterator begin() const { return const_iterator(this, m_pRoot); }
+    const_iterator end()   const { return const_iterator(this, nullptr); }
     // ForEach
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&... args) {
@@ -168,15 +171,11 @@ public:
     }
 
     // Operadores I/O
-    friend ostream& operator<<(ostream& os, const LinkedList& list) {
-        shared_lock<shared_mutex>lock(list.m_mtx);
+    friend std::ostream& operator<<(std::ostream& os, const LinkedList& list) {
+        std::shared_lock<std::shared_mutex> lock(list.m_mtx);
+
         os << "[";
-        Node* act = list.m_pRoot;
-        while(act){
-            os << "(" << act->getData() << "," << act->getRef() << ")";
-            if(act->getNext()) os << ",";
-            act = act->getNext();
-        }
+        print_list(os, list);
         os << "]";
         return os;
     }
