@@ -42,6 +42,7 @@ private:
     Ref m_ref;
     Node *m_next;
 public:
+    using value_type = T;
     LLNode() : m_data(T()), m_ref(Ref()), m_next(nullptr) {}
     LLNode(T data, Ref ref) : m_data(data), m_ref(ref), m_next(nullptr) {}
     LLNode(T data, Ref ref, Node *next) : m_data(data), m_ref(ref), m_next(next) {}
@@ -59,13 +60,11 @@ public:
 
 // Traits de Ordenamiento
 template <typename T>
-struct AscendingLinkedListTrait : BaseTrait<T,  less<T>>{
-    using Node = LLNode<T>;
+struct AscendingLinkedListTrait : BaseTrait<LLNode<T>,  less<T>>{
 };
 
 template <typename T>
-struct DescendingLinkedListTrait : BaseTrait<T, greater<T>>{
-    using Node = LLNode<T>;
+struct DescendingLinkedListTrait : BaseTrait<LLNode<T>, greater<T>>{
 };
 
 // Contenedor Principal LinkedList

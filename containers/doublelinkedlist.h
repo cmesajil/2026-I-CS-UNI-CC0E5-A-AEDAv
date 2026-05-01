@@ -37,11 +37,13 @@ public:
 
 template <typename T>
 class DLLNode : public LLNode<T, DLLNode<T>>{
+
     using Base = LLNode<T, DLLNode<T>>;
     using Node = typename Base::Node;
     private:
         Node *m_pPrev;
     public:
+        using value_type = T;
         DLLNode() : LLNode<T, DLLNode<T>>(), m_pPrev(nullptr) {}
         DLLNode(T data, Ref ref, Node *next = nullptr, Node *prev = nullptr)
             : Base(data, ref, next), m_pPrev(prev) {}
@@ -53,13 +55,11 @@ class DLLNode : public LLNode<T, DLLNode<T>>{
 };
 
 template <typename T>
-struct AscendingDLLTrait : BaseTrait<T, less<T>>{
-    using Node = DLLNode<T>;
+struct AscendingDLLTrait : BaseTrait<DLLNode<T>, less<T>>{
 };
 
 template <typename T>
-struct DescendingDLLTrait : BaseTrait<T, greater<T>>{
-    using Node = DLLNode<T>;
+struct DescendingDLLTrait : BaseTrait<DLLNode<T>, greater<T>>{
 };
 
 template <typename Trait>

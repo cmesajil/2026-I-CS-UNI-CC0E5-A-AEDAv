@@ -10,13 +10,11 @@
 // para evitar el error de redefinición que te dio el compilador.
 
 template <typename T>
-struct AscendingCDLLTrait : BaseTrait<T, less<T>>{
-    using Node = DLLNode<T>;
+struct AscendingCDLLTrait : BaseTrait<DLLNode<T>, less<T>>{
 };
 
 template <typename T>
-struct DescendingCDLLTrait : BaseTrait<T, greater<T>>{
-    using Node = DLLNode<T>;
+struct DescendingCDLLTrait : BaseTrait<DLLNode<T>, greater<T>>{
 };
 
 

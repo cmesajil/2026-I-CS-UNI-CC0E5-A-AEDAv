@@ -9,14 +9,12 @@
 //usa el mismo nodo LL
 
 template <typename T>
-struct AscendingCLLTrait : BaseTrait<T, less<T>> {
-    using Node = LLNode<T>;
+struct AscendingCLLTrait : BaseTrait<LLNode<T>, less<T>> {
 };
 
 
 template <typename T>
-struct DescendingCLLTrait : BaseTrait<T, greater<T>> {
-    using Node = LLNode<T>;
+struct DescendingCLLTrait : BaseTrait<LLNode<T>, greater<T>> {
 };
 
 //iterator
