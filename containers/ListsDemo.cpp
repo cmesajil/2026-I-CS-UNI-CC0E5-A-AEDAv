@@ -164,6 +164,10 @@ void CircularDoubleLinkedListDemo(){
         cout << *it << " ";
     cout << endl;
 
+    cout << "Backward iterator: "<< endl;
+    for (auto it = list2.rbegin(); it != list2.rend(); ++it)
+        cout << *it << " ";
+    cout << endl;
 
 }
 

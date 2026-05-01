@@ -30,12 +30,16 @@ public:
     friend forward_iterator;
     using const_iterator = CLLForwardIterator<const CircularDoubleLinkedList<Trait>>;
     friend const_iterator;
-
+    using const_backward_iterator = BackwardIterator<const CircularDoubleLinkedList<Trait>>;
+    friend const_backward_iterator;
     //iteradores
     forward_iterator begin() { return forward_iterator(this, this->m_pRoot); }
     forward_iterator end()   { return forward_iterator(this, nullptr, true); }
-    const_iterator begin() const { return const_iterator(this, this->m_pRoot); }
+    const_backward_iterator rbegin() { return const_backward_iterator(this,this->m_tail); }
+    const_backward_iterator rend()   { return const_backward_iterator(this, nullptr); }
+    const_iterator begin() const { return const_iterator(this, this->m_pRoot); } //para print
     const_iterator end()   const { return const_iterator(this, nullptr); }
+
 
 
 public:

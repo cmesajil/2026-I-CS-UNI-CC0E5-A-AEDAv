@@ -1,25 +1,7 @@
 #ifndef DOUBLELINKEDLIST_H
 #define DOUBLELINKEDLIST_H
 #include "linkedlist.h"
-// DONE Los iteradores ahora son forward y backward
-
-
-
-template <typename Container>
-class DoubleLinkedList_backward_iterator : public general_iterator<Container, DoubleLinkedList_backward_iterator<Container>> {
-public:
-    using MySelf = DoubleLinkedList_backward_iterator<Container>;
-    using Parent = general_iterator<Container, MySelf>;
-    using Parent::Parent;
-    MySelf& operator++() {
-        if (this->m_pNode) {
-            // Avanzar en el iterador significa retroceder en la lista
-            this->m_pNode = this->m_pNode->getPrev();
-        }
-        return *this;
-    }
-};
-
+#include "iterators.h"
 
 
 template <typename T>
@@ -59,10 +41,12 @@ public:
     using MySelf     = DoubleLinkedList<Trait>;
     using  forward_iterator   = ForwardIterator< MySelf > ;
     friend forward_iterator;
-    using  backward_iterator  = DoubleLinkedList_backward_iterator< MySelf > ;
+    using  backward_iterator  = BackwardIterator<MySelf>;
     friend backward_iterator;
     using const_iterator = ForwardIterator<const LinkedList<Trait>>;
     friend const_iterator;
+    using const_backward_iterator = BackwardIterator<const DoubleLinkedList<Trait>>;
+    friend const_backward_iterator;
 
 
 private:
