@@ -14,23 +14,9 @@
 #include "util.h"
 #include "../types.h"
 #include "traits.h"
+#include "iterators.h"
+
 using namespace std;
-
-// Iterador Forward
-template <typename Container>
-class LinkedListForwardIterator : public general_iterator<Container, LinkedListForwardIterator<Container>>{
-public:
-    using MySelf = LinkedListForwardIterator<Container>;
-    using Parent = general_iterator<Container, MySelf>;
-    using Parent::Parent;
-
-    MySelf& operator++() {
-        if (this->m_pNode) {
-            this->m_pNode = this->m_pNode->getNext();
-        }
-        return *this;
-    }
-};
 
 // Linked List Node
 template <typename T, typename NodeType=void>
@@ -76,9 +62,9 @@ public:
     using Comp       = typename Trait::Comp;
     using MySelf     = LinkedList<Trait>;
 
-    using forward_iterator = LinkedListForwardIterator<MySelf>;
+    using forward_iterator = ForwardIterator<MySelf>;
     friend forward_iterator;
-    using const_iterator = LinkedListForwardIterator<const LinkedList<Trait>>;
+    using const_iterator = ForwardIterator<const LinkedList<Trait>>;
     friend const_iterator;
 
 protected:
@@ -111,7 +97,7 @@ public:
     // Copy Assignment
     LinkedList& operator=(const LinkedList &other) {
         if (this != &other) {
-            while (m_size > 0) pop_front();
+            clear();
             shared_lock<shared_mutex> lock(other.m_mtx);
             for (Node* curr = other.m_pRoot; curr != nullptr; curr = curr->getNext()) {
                 push_back(curr->getData(), curr->getRef());
@@ -123,7 +109,7 @@ public:
     // Move Assignment
     LinkedList& operator=(LinkedList &&other) {
         if (this != &other) {
-            while (m_size > 0) pop_front();
+            clear();
             unique_lock<shared_mutex> lockOther(other.m_mtx);
             m_pRoot = std::exchange(other.m_pRoot, nullptr);
             m_tail  = std::exchange(other.m_tail, nullptr);
@@ -133,8 +119,10 @@ public:
     }
 
     // Destructor Seguro
-    virtual ~LinkedList() {
-        unique_lock<shared_mutex>lock(m_mtx);
+    virtual ~LinkedList() { clear();}
+
+    void clear() {
+        unique_lock<shared_mutex> lock(m_mtx);
         Node* current = m_pRoot;
         while(current){
             Node* next = current->getNext();
@@ -180,25 +168,9 @@ public:
         return os;
     }
 
-    friend istream& operator>>(istream& is, LinkedList& list) {
-        char ch;
-        if (!(is >> ch) || ch != '[') {
-            is.clear(ios_base::failbit);
-            return is;
-        }
-        value_type val;
-        Ref ref;
-        char comma, parenClose;
-        while (is >> ch && ch != ']') {
-            if (ch == '(') {
-                if (is >> val >> comma >> ref >> parenClose) {
-                    if (comma == ',' && parenClose == ')') {
-                        list.push_back(val, ref);
-                    }
-                }
-            }
-        }
-        return is;
+    friend std::istream& operator>>(std::istream& is, LinkedList& list) {
+        std::unique_lock<std::shared_mutex> lock(list.m_mtx);
+        return read_list(is, list);
     }
 };
 

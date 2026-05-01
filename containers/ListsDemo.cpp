@@ -83,6 +83,16 @@ void DoubleLinkedListDemo(){
     DoubleLinkedList<AscendingDLLTrait<T1>> list3 = list;
     cout << list3 << endl;
 
+    cout << "Forward iterator: "<< endl;
+    for (auto it = list3.begin(); it != list3.end(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+    cout << "Backward iterator: "<< endl;
+    for (auto it = list3.rbegin(); it != list3.rend(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
 
 
     cout <<"PRUEBA DE MOVE CONSTRUCTOR DOUBLE lINKED lIST" << endl;
@@ -118,6 +128,12 @@ void CircularLinkedListDemo(){
     CircularLinkedList<DescendingCLLTrait<T1>> list2;
     DemoList(list2, "DesCLL.txt");
 
+    cout << "Forward iterator: "<< endl;
+    for (auto it = list2.begin(); it != list2.end(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+
     cout <<"FOR EACH ADD 5" << endl;
     list.ForEach(Add<T1>,5);
     cout << list << endl;
@@ -141,6 +157,14 @@ void CircularDoubleLinkedListDemo(){
     DemoList(list, "AscCLL.txt");
     CircularDoubleLinkedList<DescendingCDLLTrait<T1>> list2;
     DemoList(list2, "DesCLL.txt");
+
+
+    cout << "Forward iterator: "<< endl;
+    for (auto it = list2.begin(); it != list2.end(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+
 }
 
 
@@ -183,7 +207,7 @@ void TestConcurrencia() {
 void TestOperators() {
     cout << "\nTEST DE OPERADORES" << endl;
     LinkedList<AscendingLinkedListTrait<T1>> list;
-    
+
     // 1. Probamos operator>> (Lectura)
     cout << "Simulando lectura desde formato: [(10, 100), (20, 200), (30, 300)]" << endl;
     stringstream simulador_input("[(10, 100), (20, 200), (30, 300)]");
@@ -191,11 +215,11 @@ void TestOperators() {
 
     // 2. Probamos operator<< (Escritura)
     cout << "Lista luego de la lectura (operator<<): " << list << endl;
-    
+
     // 3. Probamos operator[] (Acceso seguro por indice)
     cout << "Accediendo al indice [0] (operator[]): Dato -> " << list[0] << endl;
     cout << "Accediendo al indice [2] (operator[]): Dato -> " << list[2] << endl;
-    
+
     // Probamos la excepcion del operator[] (Descomentar para probar)
     // cout << "Probando fuera de rango: " << list[5] << endl; // Lanzara la excepcion
 }

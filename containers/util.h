@@ -1,6 +1,7 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 #include <ostream>
+#include "../types.h"
 using namespace std;
 
 template <typename Container>
@@ -42,5 +43,36 @@ void print_list(std::ostream& os, const List& list) {
         if (it != end)
             os << ", ";
     }
+}
+
+
+template <typename List>
+std::istream& read_list(std::istream& is, List& list) {
+    using value_type = typename List::value_type;
+    //using Ref = typename List::Ref; //  asegúrate que exista
+    char ch;
+    if (!(is >> ch) || ch != '[') {
+        is.setstate(std::ios::failbit);
+        return is;
+    }
+
+    value_type val;
+    Ref ref;
+    char comma, parenClose;
+
+    while (is >> ch && ch != ']') {
+        if (ch == '(') {
+            if (is >> val >> comma >> ref >> parenClose) {
+                if (comma == ',' && parenClose == ')') {
+                    list.insert(val, ref); //  reutilizable , crear otro para push
+                } else {
+                    is.setstate(std::ios::failbit);
+                    return is;
+                }
+            }
+        }
+    }
+
+    return is;
 }
 #endif

@@ -5,9 +5,9 @@
 #include <mutex>
 #include <shared_mutex>
 #include <iostream>
+#include "CircularLinkedList.h"
+
 #include "../types.h"
-// NOTA: Mueve tus structs de Traits a un archivo llamado "CircularTraits.h"
-// para evitar el error de redefinición que te dio el compilador.
 
 template <typename T>
 struct AscendingCDLLTrait : BaseTrait<DLLNode<T>, less<T>>{
@@ -26,7 +26,16 @@ public:
     using Node       = typename Trait::Node;
     using Comp       = typename Trait::Comp;
     using MySelf     = CircularDoubleLinkedList<Trait>;
+    using forward_iterator = CLLForwardIterator<MySelf>;
+    friend forward_iterator;
+    using const_iterator = CLLForwardIterator<const CircularDoubleLinkedList<Trait>>;
+    friend const_iterator;
 
+    //iteradores
+    forward_iterator begin() { return forward_iterator(this, this->m_pRoot); }
+    forward_iterator end()   { return forward_iterator(this, nullptr, true); }
+    const_iterator begin() const { return const_iterator(this, this->m_pRoot); }
+    const_iterator end()   const { return const_iterator(this, nullptr); }
 
 private:
     // Internal insert (debe ser privado para que nadie toque los punteros directamente)
@@ -76,41 +85,14 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const CircularDoubleLinkedList<Trait>& list) {
         shared_lock<shared_mutex> lock(list.m_mtx);
         os << "[";
-        if (list.m_pRoot) {
-            Node *act = list.m_pRoot;
-            do {
-                os << "(" << act->getData() << "," << act->getRef() << ")";
-                act = act->getNext();
-                if (act != list.m_pRoot) os << ",";
-            } while (act != list.m_pRoot);
-        }
+        print_list(os, list);
         os << "]";
-
-        if (list.m_pRoot)
-            os << " ->root(" << list.m_pRoot->getData()<< "," << list.m_pRoot->getRef() << ")";
         return os;
     }
 
     friend std::istream& operator>>(std::istream& is, CircularDoubleLinkedList& list) {
-        char ch;
-        if (!(is >> ch) || ch != '[') {
-            is.clear(std::ios_base::failbit);
-            return is;
-        }
-        value_type val;
-        Ref ref;
-        char comma, parenClose;
-        while (is >> ch && ch != ']') {
-            if (ch == '(') {
-                // Nota: Esto funcionará para cualquier tipo que soporte >>
-                if (is >> val >> comma >> ref >> parenClose) {
-                    if (comma == ',' && parenClose == ')') {
-                        list.insert(val, ref);
-                    }
-                }
-            }
-        }
-        return is;
+        std::unique_lock<std::shared_mutex> lock(list.m_mtx);
+        return read_list(is, list);
     }
 
 

@@ -1,22 +1,9 @@
 #ifndef DOUBLELINKEDLIST_H
 #define DOUBLELINKEDLIST_H
-
 #include "linkedlist.h"
 // DONE Los iteradores ahora son forward y backward
 
-template <typename Container>
-class DoubleLinkedList_forward_iterator : public general_iterator<Container, DoubleLinkedList_forward_iterator<Container>> {
-public:
-    using MySelf = DoubleLinkedList_forward_iterator<Container>;
-    using Parent = general_iterator<Container, MySelf>;
-    using Parent::Parent;
-    MySelf& operator++() {
-        if (this->m_pNode) {
-            this->m_pNode = this->m_pNode->getNext();
-        }
-        return *this;
-    }
-};
+
 
 template <typename Container>
 class DoubleLinkedList_backward_iterator : public general_iterator<Container, DoubleLinkedList_backward_iterator<Container>> {
@@ -69,10 +56,14 @@ public:
 
     using Node = typename Trait::Node;
     using value_type = typename Trait::value_type;
-    using  forward_iterator   = DoubleLinkedList_forward_iterator < DoubleLinkedList<Trait> > ;
+    using MySelf     = DoubleLinkedList<Trait>;
+    using  forward_iterator   = ForwardIterator< MySelf > ;
     friend forward_iterator;
-    using  backward_iterator  = DoubleLinkedList_backward_iterator< DoubleLinkedList<Trait> > ;
+    using  backward_iterator  = DoubleLinkedList_backward_iterator< MySelf > ;
     friend backward_iterator;
+    using const_iterator = ForwardIterator<const LinkedList<Trait>>;
+    friend const_iterator;
+
 
 private:
 
@@ -112,6 +103,9 @@ public:
 
     backward_iterator rbegin() { return backward_iterator(this,this->m_tail); }
     backward_iterator rend()   { return backward_iterator(this, nullptr); }
+
+    const_iterator begin() const { return const_iterator(this, this->m_pRoot); }
+    const_iterator end()   const { return const_iterator(this, nullptr); }
 
     // Done: Agregar control concurrente
     template <typename Func, typename... Args>
@@ -221,37 +215,16 @@ public:
 
     // Operadores I/O
     friend istream& operator>>(istream& is, DoubleLinkedList& list) {
-        char ch;
-        if (!(is >> ch) || ch != '[') {
-            is.clear(ios_base::failbit);
-            return is;
-        }
-        value_type val;
-        Ref ref;
-        char comma, parenClose;
-        while (is >> ch && ch != ']') {
-            if (ch == '(') {
-                if (is >> val >> comma >> ref >> parenClose) {
-                    if (comma == ',' && parenClose == ')') {
-                        list.insert(val, ref);
-                    }
-                }
-            }
-        }
-        return is;
+        std::unique_lock<std::shared_mutex> lock(list.m_mtx);
+        return read_list(is, list);
     }
     friend ostream& operator<<(ostream& os, const DoubleLinkedList<Trait>& list) {
         shared_lock<shared_mutex> lock(list.m_mtx);
         os << "[";
-        for (Node* curr = list.m_pRoot; curr != nullptr; curr = curr->getNext()) {
-            os << "(" << curr->getData() << "," << curr->getRef() << ")";
-            if (curr->getNext()) os << ",";
-        }
+        print_list(os, list);
         os << "]";
         return os;
     }
-
-
 
 };
 

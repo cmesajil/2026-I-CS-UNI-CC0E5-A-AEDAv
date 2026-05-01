@@ -30,7 +30,7 @@ private:
 public:
     CLLForwardIterator(Container *pContainer, Node *pNode): Parent(pContainer, pNode), m_start(pNode), m_started(false) {}
     CLLForwardIterator(Container *pContainer, Node *pNode, bool sentinel): Parent(pContainer, pNode), m_start(nullptr), m_started(sentinel) {}
-    //t5: operador++ forward
+    //operador++ forward
     MySelf& operator++(){
         if (this->m_pNode){
             m_started      = true;
@@ -180,7 +180,7 @@ public:
         clear();
     }
 
-    //t14: push front
+    // push front
     void push_front(value_type value, Ref ref) override{
         unique_lock<shared_mutex> lock(m_mtx);
         Node *newNode = new Node(value, ref);
@@ -235,7 +235,7 @@ public:
         return result;
     }
 
-    //t18: pop back devuelve tupla (value, ref)
+    // pop back devuelve tupla (value, ref)
     std::tuple<value_type, Ref> pop_back() override{
         unique_lock<shared_mutex> lock(m_mtx);
         if (!this->m_pRoot) throw runtime_error("La lista esta vacia");
@@ -279,21 +279,8 @@ public:
     }
 
     friend istream &operator>>(istream &is, CircularLinkedList &list){
-        char ch;
-        if (!(is >> ch) || ch != '['){
-            is.clear(ios_base::failbit);
-            return is;
-        }
-        value_type val;
-        Ref        ref;
-        char       comma, parenClose;
-        while (is >> ch && ch != ']')
-            if (ch == '(')
-                if (is >> val >> comma >> ref >> parenClose)
-                    if (comma == ',' && parenClose == ')')
-                        list.insert(val, ref);
-        is.ignore(numeric_limits<streamsize>::max(), '\n');
-        return is;
+        std::unique_lock<std::shared_mutex> lock(list.m_mtx);
+        return read_list(is, list);
     }
 
     size_t size() const override{
