@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -64,6 +65,9 @@ void DemoVector(){
     Print(v2, of);
 }
 void DemoHeap(){
+
+    std::cout << "=== DEMOSTRACIÓN DE HEAP CON TRAITS Y CONCURRENCIA ===\n\n"<< endl;
+
     Heap<MinHeapTrait<T1>> heap(10);
     heap.insert(16, 16);
     heap.insert(28, 28);
@@ -72,8 +76,21 @@ void DemoHeap(){
     heap.insert(13, 13);
     heap.insert(3, 3);
 
-    cout << "Heap: " << heap.toString() << endl;
+    std::cout << "[MinHeap] Vector interno (debería priorizar menores en la raíz):\n";
+    std::cout << heap.toString() << "\n"; // Llama al nuevo operator<< del HeapNode
+    std::cout << "Peek mínimo: " << heap.peek().getData() << "\n\n";
 
+    Heap<MaxHeapTrait<T1>> maxheap(10);
+    maxheap.insert(16, 16);
+    maxheap.insert(28, 28);
+    maxheap.insert(71, 71);
+    maxheap.insert(7, 7);
+    maxheap.insert(13, 13);
+    maxheap.insert(3, 3);
+    std::cout << "[MaxHeap] Vector interno (debería priorizar mayores en la raíz):\n";
+    std::cout << maxheap.toString() << "\n";
+    std::cout << "Peek máximo: " << maxheap.peek().getData() << "\n";
+    std::cout << "\n======================================================\n";
 }
 // DemoConcurrentVector
 void DemoConcurrentVector(){
