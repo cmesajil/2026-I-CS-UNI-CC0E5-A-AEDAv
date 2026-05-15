@@ -140,26 +140,34 @@
                 return;
             ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
         }
+
+
+        void pop_back_unsafe() {
+            // Sin candados. Diseñada solo para estructuras hijas como el Heap que ya están protegidas.
+            if (m_size > 0) {
+                m_size--;
+            }
+        }
     };
 
 
-    template <typename T>
-    Vector<T>::Vector(size_t capacity){
+    template <typename Trait>
+    Vector<Trait>::Vector(size_t capacity){
         m_capacity = capacity;
         m_size = 0;
         m_data = new Node[capacity];
     }
 
-    template <typename T>
-    Vector<T>::~Vector(){
+    template <typename Trait>
+    Vector<Trait>::~Vector(){
         delete [] m_data;
     }
 
 
 
 
-    template <typename T>
-    void Vector<T>::resize(){
+    template <typename Trait>
+    void Vector<Trait>::resize(){
         m_capacity = (m_capacity < 10) ? m_capacity+10 : m_capacity * 2;
         Node * new_data = new Node[m_capacity];
         for(size_t i = 0; i < m_size; ++i)
@@ -168,22 +176,22 @@
         m_data = new_data;
     }
 
-    template <typename T>
-    void Vector<T>::push_back(value_type value, Ref ref){
+    template <typename Trait>
+    void Vector<Trait>::push_back(value_type value, Ref ref){
         unique_lock<shared_mutex> lock(m_mtx);
         if(m_size == m_capacity) // Overflow
             resize();
         m_data[m_size++] = Node(value, ref);
     }
 
-    template <typename T>
-    size_t Vector<T>::size() const{
+    template <typename Trait>
+    size_t Vector<Trait>::size() const{
         shared_lock<shared_mutex> lock(m_mtx);
         return m_size;
     }
 
-    template <typename T>
-    string Vector<T>::toString() const{
+    template <typename Trait>
+    string Vector<Trait>::toString() const{
         shared_lock<shared_mutex> lock(m_mtx);
         ostringstream oss;
         oss << "[";
@@ -196,19 +204,19 @@
         return oss.str();
     }
 
-    template <typename T>
-    ostream& operator<<(ostream& os, const Vector<T>& v){
+    template <typename Trait>
+    ostream& operator<<(ostream& os, const Vector<Trait>& v){
         return os << v.toString();
     }
 
     // TODO: Implementar
-    template <typename T>
-    istream& operator>>(istream& is, Vector<T>& v){
+    template <typename Trait>
+    istream& operator>>(istream& is, Vector<Trait>& v){
         return is;
     }
     // 2. Implementación al final del archivo
-    template <typename T>
-    void Vector<T>::pop_back(){
+    template <typename Trait>
+    void Vector<Trait>::pop_back(){
         unique_lock<shared_mutex> lock(m_mtx);
         if (m_size > 0) {
             m_size--;
