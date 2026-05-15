@@ -77,10 +77,10 @@ void DemoHeap(){
     heap.insert(3, 3);
 
     std::cout << "[MinHeap] Vector interno (debería priorizar menores en la raíz):\n";
-    std::cout << heap.toString() << "\n"; // Llama al nuevo operator<< del HeapNode
+    std::cout << heap << "\n"; // Llama al nuevo operator<< del HeapNode
     std::cout << "Peek mínimo: " << heap.peek().getData() << "\n\n";
 
-    Heap<MaxHeapTrait<T1>> maxheap(10);
+    Heap<MaxHeapTrait<T1>> maxheap(3);
     maxheap.insert(16, 16);
     maxheap.insert(28, 28);
     maxheap.insert(71, 71);
@@ -88,9 +88,21 @@ void DemoHeap(){
     maxheap.insert(13, 13);
     maxheap.insert(3, 3);
     std::cout << "[MaxHeap] Vector interno (debería priorizar mayores en la raíz):\n";
-    std::cout << maxheap.toString() << "\n";
+    std::cout << maxheap << "\n";
     std::cout << "Peek máximo: " << maxheap.peek().getData() << "\n";
     std::cout << "\n======================================================\n";
+
+
+    //  Grabar la lista en un archivo
+    ofstream os("heap.txt");
+    os << heap << endl;
+    os.close();
+    // Leer la lista desde un archivo
+    ifstream is("heap.txt");
+    Heap<MinHeapTrait<T1>> readheap(10);
+    is >> readheap;
+    cout << readheap << endl;
+    is.close();
 }
 // DemoConcurrentVector
 void DemoConcurrentVector(){

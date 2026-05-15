@@ -74,13 +74,13 @@ public:
     Heap(size_t capacity) : m_vec(capacity), m_comp() {}
     ~Heap() {}
     Vector<Trait>* getVector() { return &m_vec; }
-    bool isEmpty(){
+    bool isEmpty() {
         return m_vec.empty();
     }
-    size_t size(){
+    size_t size() {
         return m_vec.size();
     }
-    string toString(){
+    string toString() const{
         return m_vec.toString();
     }
 
@@ -135,7 +135,15 @@ public:
             return m_vec[0];
         }
 
-
+    friend std::ostream& operator<<(std::ostream& os, const Heap& heap) {
+        std::shared_lock<std::shared_mutex> lock(heap.m_mtx);
+        os << heap.toString();
+        return os;
+    }
+    friend std::istream& operator>>(std::istream& is, Heap& heap) {
+        //std::unique_lock<std::shared_mutex> lock(heap.m_mtx); ya esta en insert
+        return read_list(is, heap);
+    }
 
 };
 
