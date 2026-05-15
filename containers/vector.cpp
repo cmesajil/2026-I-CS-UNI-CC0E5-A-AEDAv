@@ -4,6 +4,7 @@
 #include <fstream>
 #include <thread>
 #include "vector.h"
+#include "heap.h"
 using namespace std;
 
 void AddOne(int& n){
@@ -18,7 +19,7 @@ void Add(T& n, T value){
 }
 
 void DemoVector(){
-    Vector<T1> v1(3);
+    Vector<AscendingVectorTrait<T1>> v1(3);
     v1.push_back(1, 11);
     v1.push_back(2, 22);
     v1.push_back(-1, -15);
@@ -32,7 +33,7 @@ void DemoVector(){
     //           =========
     //                cout << endl;
 
-    Vector<string> v2(10);
+    Vector<AscendingVectorTrait<T2>> v2(10);
     v2.push_back("Hola", 5);
     v2.push_back("Mundo", 6);
     v2.push_back("!", 1);
@@ -56,16 +57,27 @@ void DemoVector(){
     cout << endl;
 
     Print(v2, cout);
-    ForEach(v2, Add<string>, string("XYZ"));
+    ForEach(v2, Add<T2>, string("XYZ"));
     cout << v2 << endl;
 
     Print(v1, of);
     Print(v2, of);
 }
+void DemoHeap(){
+    Heap<MinHeapTrait<T1>> heap(10);
+    heap.insert(16, 16);
+    heap.insert(28, 28);
+    heap.insert(71, 71);
+    heap.insert(7, 7);
+    heap.insert(13, 13);
+    heap.insert(3, 3);
 
+    cout << "Heap: " << heap.toString() << endl;
+
+}
 // DemoConcurrentVector
 void DemoConcurrentVector(){
-    Vector<T1> v(4);
+    Vector<AscendingVectorTrait<T1>> v(4);
     v.push_back(0, 0);
     v.push_back(0, 0);
     v.push_back(0, 0);

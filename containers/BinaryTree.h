@@ -21,6 +21,8 @@ struct BinaryTreeNode{
 //    AscendingTrait<BinaryTreeNode<T>> o
 //    DescendingTrait<BinaryTreeNode<T>>
 
+
+//usar iteradores
 template<typename Trait>
 class BinaryTree{
     using value_type = typename Trait::value_type;
@@ -67,6 +69,7 @@ public:
         void print(){
             print(m_pRoot);
         }
+        //error
         void print(Node *node){
             if(node != nullptr){
                 print(node->left);

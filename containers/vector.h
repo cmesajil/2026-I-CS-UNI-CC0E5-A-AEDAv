@@ -1,181 +1,228 @@
-#ifndef __VECTOR_H__
-#define __VECTOR_H__
+    #ifndef __VECTOR_H__
+    #define __VECTOR_H__
 
-#include <iostream>
-#include <cstddef> // size_t
-#include <string>
-#include <sstream>
-#include <shared_mutex> // shared_mutex
-#include "general_iterator.h"
-#include "util.h"
-#include <mutex>
-#include "../types.h"
-using namespace std;
+    #include <iostream>
+    #include <cstddef> // size_t
+    #include <string>
+    #include <sstream>
+    #include <shared_mutex> // shared_mutex
+    #include "general_iterator.h"
+    #include "util.h"
+    #include <mutex>
+    #include "../types.h"
+    #include <functional>
+    #include "traits.h"
+    using namespace std;
 
-template <typename Container>
-class vector_forward_iterator : public general_iterator<Container, vector_forward_iterator<Container>> {
-public:
-    using MySelf = vector_forward_iterator<Container>;
-    using Parent = general_iterator<Container, MySelf>;
-    using Parent::Parent;
-    MySelf operator++() { this->m_pNode++; return *this; }
-};
+    template <typename Container>
+    class vector_forward_iterator : public general_iterator<Container, vector_forward_iterator<Container>> {
+    public:
+        using MySelf = vector_forward_iterator<Container>;
+        using Parent = general_iterator<Container, MySelf>;
+        using Parent::Parent;
+        MySelf operator++() { this->m_pNode++; return *this; }
+    };
 
-template <typename Container>
-class vector_backward_iterator : public general_iterator<Container, vector_backward_iterator<Container>> {
-public:
-    using MySelf = vector_backward_iterator<Container>;
-    using Parent = general_iterator<Container, MySelf>;
-    using Parent::Parent;
-    MySelf operator++() { this->m_pNode--; return *this; }
-};
+    template <typename Container>
+    class vector_backward_iterator : public general_iterator<Container, vector_backward_iterator<Container>> {
+    public:
+        using MySelf = vector_backward_iterator<Container>;
+        using Parent = general_iterator<Container, MySelf>;
+        using Parent::Parent;
+        MySelf operator++() { this->m_pNode--; return *this; }
+    };
 
-template <typename T>
-class VectorNode{
-    T   m_data;
-    Ref m_ref;
-public:
-    VectorNode() : m_data(T()), m_ref(Ref()) {}
-    VectorNode(T data, Ref ref) : m_data(data), m_ref(ref) {}
-    VectorNode(const VectorNode &other) : m_data(other.m_data), m_ref(other.m_ref) {}
-    VectorNode(VectorNode &&other) : m_data(move(other.m_data)), m_ref(move(other.m_ref)) {}
-    VectorNode& operator=(const VectorNode &other) {
-        m_data = other.m_data;
-        m_ref = other.m_ref;
-        return *this;
+
+
+    template <typename T>
+    class VectorNode{
+        T   m_data;
+        Ref m_ref;
+    public:
+        using value_type = T;
+        VectorNode() : m_data(T()), m_ref(Ref()) {}
+        VectorNode(T data, Ref ref) : m_data(data), m_ref(ref) {}
+        VectorNode(const VectorNode &other) : m_data(other.m_data), m_ref(other.m_ref) {}
+        VectorNode(VectorNode &&other) : m_data(move(other.m_data)), m_ref(move(other.m_ref)) {}
+        VectorNode& operator=(const VectorNode &other) {
+            m_data = other.m_data;
+            m_ref = other.m_ref;
+            return *this;
+        }
+        VectorNode& operator=(VectorNode &&other) {
+            m_data = move(other.m_data);
+            m_ref = move(other.m_ref);
+            return *this;
+        }
+
+        T    getData() const { return m_data; }
+        T&   getDataRef() { return m_data; }
+        void setData(T data) { m_data = data; }
+        Ref  getRef() { return m_ref; }
+        void setRef(Ref ref) { m_ref = ref; }
+
+    };
+
+    template <typename T>
+    ostream& operator<<(ostream& os, VectorNode<T>& node){
+        return os << "(" << node.getData() << ", " << node.getRef() << ")";
     }
-    VectorNode& operator=(VectorNode &&other) {
-        m_data = move(other.m_data);
-        m_ref = move(other.m_ref);
-        return *this;
+
+    // Traits de Ordenamiento
+    template <typename T>
+    struct AscendingVectorTrait : BaseTrait<VectorNode<T>,  less<T>>{
+    };
+
+    template <typename T>
+    struct DescendingVectorTrait : BaseTrait<VectorNode<T>, greater<T>>{
+    };
+
+    template <typename Trait>
+    class Vector{
+    public:
+    public:
+        using value_type = typename Trait::value_type;
+        using Node       = typename Trait::Node;
+        using Comp       = typename Trait::Comp;
+        using MySelf     = Vector<Trait>;
+        using  forward_iterator   = vector_forward_iterator < MySelf > ;
+        friend forward_iterator;
+        using  backward_iterator  = vector_backward_iterator< MySelf > ;
+        friend backward_iterator;
+    private:
+        size_t  m_capacity;
+        size_t  m_size;
+        Node   *m_data;
+        mutable shared_mutex m_mtx;
+        void    resize();
+    public:
+        Vector(size_t capacity = 10);
+        virtual ~Vector();
+        virtual void push_back(value_type value, Ref ref);
+        virtual size_t size() const;
+        virtual string toString() const;
+        virtual void pop_back();
+        virtual bool empty() const {
+            shared_lock<shared_mutex> lock(m_mtx);
+            return m_size == 0;
+        }
+
+        // Dentro de la sección pública de class Vector:
+        Node& operator[](size_t index) {
+            // Nota: Para máxima seguridad concurrencial interna, operaciones complejas como el Swap
+            // se controlan externamente o asumen que el Heap ya bloqueó el contexto si fuese necesario,
+            // pero para acceso crudo directo a los elementos del arreglo:
+            return m_data[index];
+        }
+
+        const Node& operator[](size_t index) const {
+            return m_data[index];
+        }
+
+        forward_iterator begin() { return forward_iterator(this, m_data); }
+        forward_iterator end()   { return forward_iterator(this, m_data + m_size); }
+
+        backward_iterator rbegin() { return backward_iterator(this, m_data + m_size - 1); }
+        backward_iterator rend()   { return backward_iterator(this, m_data - 1); }
+
+        // Done: Agregar control concurrente
+        template <typename Func, typename... Args>
+        void ForEach(Func func, Args &&...  args){
+            unique_lock<shared_mutex> lock(m_mtx);
+            ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
+        }
+
+        // Done: Agregar control concurrente
+        template <typename Func, typename... Args>
+        void ReverseForEach(Func func, Args &&...  args){
+            unique_lock<shared_mutex> lock(m_mtx);
+            if(m_size == 0)
+                return;
+            ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
+        }
+    };
+
+
+    template <typename T>
+    Vector<T>::Vector(size_t capacity){
+        m_capacity = capacity;
+        m_size = 0;
+        m_data = new Node[capacity];
     }
 
-    T    getData() const { return m_data; }
-    T&   getDataRef() { return m_data; }
-    void setData(T data) { m_data = data; }
-    Ref  getRef() { return m_ref; }
-    void setRef(Ref ref) { m_ref = ref; }
-    
-};
+    template <typename T>
+    Vector<T>::~Vector(){
+        delete [] m_data;
+    }
 
-template <typename T>
-ostream& operator<<(ostream& os, VectorNode<T>& node){
-    return os << "(" << node.getData() << ", " << node.getRef() << ")";
-}
 
-template <typename T>
-class Vector{
-public:
-    using  value_type = T;
-    using  forward_iterator   = vector_forward_iterator < Vector<T> > ;
-    friend forward_iterator;
-    using  backward_iterator  = vector_backward_iterator< Vector<T> > ;
-    friend backward_iterator;
-    using  Node               = VectorNode<T>;
-private:
-    size_t  m_capacity;
-    size_t  m_size;
-    Node   *m_data;
-    mutable shared_mutex m_mtx;
-    void    resize();
-public:
-    Vector(size_t capacity = 10);
-    virtual ~Vector();
-    virtual void push_back(value_type value, Ref ref);
-    virtual size_t size() const;
-    virtual string toString() const;
 
-    forward_iterator begin() { return forward_iterator(this, m_data); }
-    forward_iterator end()   { return forward_iterator(this, m_data + m_size); }
 
-    backward_iterator rbegin() { return backward_iterator(this, m_data + m_size - 1); }
-    backward_iterator rend()   { return backward_iterator(this, m_data - 1); }
-    
-    // Done: Agregar control concurrente
-    template <typename Func, typename... Args>
-    void ForEach(Func func, Args &&...  args){
+    template <typename T>
+    void Vector<T>::resize(){
+        m_capacity = (m_capacity < 10) ? m_capacity+10 : m_capacity * 2;
+        Node * new_data = new Node[m_capacity];
+        for(size_t i = 0; i < m_size; ++i)
+            new_data[i] = m_data[i];
+        delete [] m_data;
+        m_data = new_data;
+    }
+
+    template <typename T>
+    void Vector<T>::push_back(value_type value, Ref ref){
         unique_lock<shared_mutex> lock(m_mtx);
-        ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
+        if(m_size == m_capacity) // Overflow
+            resize();
+        m_data[m_size++] = Node(value, ref);
     }
 
-    // Done: Agregar control concurrente
-    template <typename Func, typename... Args>
-    void ReverseForEach(Func func, Args &&...  args){
+    template <typename T>
+    size_t Vector<T>::size() const{
+        shared_lock<shared_mutex> lock(m_mtx);
+        return m_size;
+    }
+
+    template <typename T>
+    string Vector<T>::toString() const{
+        shared_lock<shared_mutex> lock(m_mtx);
+        ostringstream oss;
+        oss << "[";
+        for(size_t i = 0; i < m_size; ++i){
+            if(i > 0)
+                oss << ",";
+            oss << m_data[i];
+        }
+        oss << "]";
+        return oss.str();
+    }
+
+    template <typename T>
+    ostream& operator<<(ostream& os, const Vector<T>& v){
+        return os << v.toString();
+    }
+
+    // TODO: Implementar
+    template <typename T>
+    istream& operator>>(istream& is, Vector<T>& v){
+        return is;
+    }
+    // 2. Implementación al final del archivo
+    template <typename T>
+    void Vector<T>::pop_back(){
         unique_lock<shared_mutex> lock(m_mtx);
-        if(m_size == 0)
-            return;
-        ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
+        if (m_size > 0) {
+            m_size--;
+            // Como manejamos primitivos o tipos estándar mediante la asignación del nodo,
+            // decrementar m_size es suficiente. El espacio queda disponible para futuros push_back.
+        }
     }
-};
+    // template <typename T>
+    // template <typename Func, typename... Args>
+    // void Vector<T>::ForEach(Func func, Args &&...  args){
+    //     ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
+    // }
 
-template <typename T>
-Vector<T>::Vector(size_t capacity){
-    m_capacity = capacity;
-    m_size = 0;
-    m_data = new Node[capacity];
-}
+    void DemoVector();
+    void DemoConcurrentVector();
 
-template <typename T>
-Vector<T>::~Vector(){
-    delete [] m_data;
-}
-
-template <typename T>
-void Vector<T>::resize(){
-    m_capacity = (m_capacity < 10) ? m_capacity+10 : m_capacity * 2;
-    Node * new_data = new Node[m_capacity];
-    for(size_t i = 0; i < m_size; ++i)
-        new_data[i] = m_data[i];
-    delete [] m_data;
-    m_data = new_data;
-}
-
-template <typename T>
-void Vector<T>::push_back(value_type value, Ref ref){
-    unique_lock<shared_mutex> lock(m_mtx);
-    if(m_size == m_capacity) // Overflow
-        resize();
-    m_data[m_size++] = Node(value, ref);
-}
-
-template <typename T>
-size_t Vector<T>::size() const{
-    shared_lock<shared_mutex> lock(m_mtx);
-    return m_size;
-}
-
-template <typename T>
-string Vector<T>::toString() const{
-    shared_lock<shared_mutex> lock(m_mtx);
-    ostringstream oss;
-    oss << "[";
-    for(size_t i = 0; i < m_size; ++i){
-        if(i > 0)
-            oss << ",";
-        oss << m_data[i];
-    }
-    oss << "]";
-    return oss.str();
-}
-
-template <typename T>
-ostream& operator<<(ostream& os, const Vector<T>& v){
-    return os << v.toString();
-}
-
-// TODO: Implementar
-template <typename T>
-istream& operator>>(istream& is, Vector<T>& v){
-    return is;
-}
-
-// template <typename T>
-// template <typename Func, typename... Args>
-// void Vector<T>::ForEach(Func func, Args &&...  args){
-//     ::ForEach(begin(), end(), func, std::forward<Args>(args)... );
-// }
-
-void DemoVector();
-void DemoConcurrentVector();
-
-#endif // __VECTOR_H__
+    #endif // __VECTOR_H__
