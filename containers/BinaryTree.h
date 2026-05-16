@@ -14,52 +14,32 @@ struct BinaryTreeNode{
     T m_data;
     Ref m_ref;
     BinaryTreeNode *m_pChild[2];
-    BinaryTreeNode(T data) : m_data(data), m_pChild{nullptr, nullptr} {}
+    public:
+        using value_type = T;
+        BinaryTreeNode(T data) : m_data(data), m_pChild{nullptr, nullptr} {}
 };
 
-// Utilizar:
-//    AscendingTrait<BinaryTreeNode<T>> o
-//    DescendingTrait<BinaryTreeNode<T>>
+template <typename T>
+struct AscendingBinaryTreeTrait : public BaseTrait<BinaryTreeNode<T>, std::less<T>> {};
 
+template <typename T>
+struct DescendingBinaryTreeTrait : public BaseTrait<BinaryTreeNode<T>, std::greater<T>> {};
 
 //usar iteradores
 template<typename Trait>
 class BinaryTree{
     using value_type = typename Trait::value_type;
     using Node       = typename Trait::Node;
-    using Compare    = typename Trait::Compare;
+    using Comp    = typename Trait::Comp;
     private:
         Node    *m_pRoot;
-        Compare  m_comp;
+        Comp  m_comp;
     public:
         BinaryTree() : m_pRoot(nullptr) {}
         ~BinaryTree() {}
 
-        // No sirve ... muy anticuado y tiene muchos casos especiales
-        void insert(value_type data){
-            Node *newNode = new Node(data);
-            if(m_pRoot == nullptr){
-                m_pRoot = newNode;
-            }else{
-                Node *current = m_pRoot;
-                while(true){
-                    if(Compare()(data, current->data)){
-                        if(current->left == nullptr){
-                            current->left = newNode;
-                            break;
-                        }
-                        current = current->left;
-                    }else{
-                        if(current->right == nullptr){
-                            current->right = newNode;
-                            break;
-                        }
-                        current = current->right;
-                    }
-                }
-            }
-        }
 protected:
+        mutable shared_mutex m_mtx;
         void internal_insert(Node* &pNode, value_type data, Ref ref);
 
 public:
@@ -67,16 +47,38 @@ public:
             internal_insert(m_pRoot, data, ref);
         }
         void print(){
-            print(m_pRoot);
+            print(std::cout, m_pRoot);
         }
-        //error
-        void print(Node *node){
-            if(node != nullptr){
-                print(node->left);
-                cout << node->data << " ";
-                print(node->right);
+        void print(std::ostream& os, Node* node) const {
+
+            if(node){
+
+                print(os, node->m_pChild[0]);
+
+                os << node->m_data << " ";
+
+                print(os, node->m_pChild[1]);
             }
         }
+
+        friend std::ostream& operator<<(std::ostream& os,
+                                        const BinaryTree& Btn)
+        {
+            std::shared_lock<std::shared_mutex> lock(Btn.m_mtx);
+
+            os << "[ ";
+
+            Btn.print(os, Btn.m_pRoot);
+
+            os << "]";
+
+            return os;
+        }
+
+        friend std::istream& operator>>(std::istream& is, BinaryTree& Btn) {
+                std::unique_lock<std::shared_mutex> lock(Btn.m_mtx);
+                return read_list(is, Btn);
+            }
 };
 
 template<typename Trait>
@@ -85,7 +87,7 @@ void BinaryTree<Trait>::internal_insert(Node* &pNode, value_type data, Ref ref){
         pNode = new Node(data);
         return;
     }
-    auto branch = !m_comp(pNode->m_data, data);
+    auto branch = m_comp(pNode->m_data, data);
     internal_insert(pNode->m_pChild[branch], data, ref);
 }
 #endif // __BINARYTREE_H__

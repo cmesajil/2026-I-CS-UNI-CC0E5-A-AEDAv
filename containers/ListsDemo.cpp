@@ -8,6 +8,7 @@
 #include "doublelinkedlist.h"
 #include "CircularLinkedList.h"
 #include "CircularDoubleLinkedList.h"
+#include "BinaryTree.h"
 // #include "circularlinkedlist.h"
 
 using namespace std;
@@ -171,12 +172,27 @@ void CircularDoubleLinkedListDemo(){
 
 }
 
+void BinaryTreeDemo(){
+    BinaryTree<AscendingBinaryTreeTrait<int>> asc;
+
+    asc.insert(8, 8);
+    asc.insert(3, 3);
+    asc.insert(10, 10);
+    asc.insert(1, 1);
+    asc.insert(6, 6);
+
+    cout << "Ascending Tree: ";
+    cout << asc;
+    cout << endl;
+}
+
 
 void ListsDemo(){
-    LinkedListDemo();
-    CircularLinkedListDemo();
-    DoubleLinkedListDemo();
-    CircularDoubleLinkedListDemo();
+    BinaryTreeDemo();
+    //LinkedListDemo();
+    //CircularLinkedListDemo();
+    //DoubleLinkedListDemo();
+    //CircularDoubleLinkedListDemo();
 }
 
 void TestConcurrencia() {
