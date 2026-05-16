@@ -173,6 +173,7 @@ void CircularDoubleLinkedListDemo(){
 }
 template <typename T>
 void print_dfs(BinaryTree<T>& btree) {
+    cout << "--- FORWARD ITERATORS ---" << endl;
     cout << "Inorder iterator: " << endl;
     btree.print_inorder();
     cout << endl;
@@ -184,37 +185,43 @@ void print_dfs(BinaryTree<T>& btree) {
     cout << "Forward postorder iterator: " << endl;
     btree.print_postorder();
     cout << endl;
+
+    cout << "--- BACKWARD ITERATORS ---" << endl;
+    cout << "Backward inorder iterator: " << endl;
+    btree.print_reverse_inorder();
+    cout << endl;
+
+    cout << "Backward preorder iterator: " << endl;
+    btree.print_reverse_preorder();
+    cout << endl;
+
+    cout << "Backward postorder iterator: " << endl;
+    btree.print_reverse_postorder();
+    cout << endl;
 }
 
 void BinaryTreeDemo(){
-    cout << "DEMO CIRCULAR DOUBLE LINKED LIST----------------------------" << endl<< endl;
+    cout << "DEMO BINARY TREE WITH FORWARD/BACKWARD ITERATORS------------" << endl << endl;
 
     BinaryTree<AscendingBinaryTreeTrait<T1>> asc;
-
     asc.insert(8, 8);
     asc.insert(3, 3);
     asc.insert(10, 10);
     asc.insert(1, 1);
     asc.insert(6, 6);
 
-    cout << "Ascending Tree: ";
-    cout << asc;
-    cout << endl;
+    cout << "Ascending Tree: " << asc << endl << endl;
 
     BinaryTree<DescendingBinaryTreeTrait<T1>> desc;
-
     desc.insert(8, 8);
     desc.insert(3, 3);
     desc.insert(10, 10);
     desc.insert(1, 1);
     desc.insert(6, 6);
 
-    cout << "Descending Tree: ";
-    cout << desc;
-    cout << endl;
+    cout << "Descending Tree: " << desc << endl << endl;
 
     BinaryTree<AscendingBinaryTreeTrait<T1>> btree;
-
     btree.insert(8, 8);
     btree.insert(3, 3);
     btree.insert(10, 10);
@@ -224,16 +231,45 @@ void BinaryTreeDemo(){
     btree.insert(4, 4);
     btree.insert(7, 7);
 
-    cout << "Ascending Tree: ";
-    cout << btree;
-    cout << endl;
-    cout << "Forward in order iterator: "<< endl;
+    cout << "Ascending Tree: " << btree << endl << endl;
+
+    // Prueba manual de Forward Inorder
+    cout << "Forward in order iterator (Manual loop): "<< endl;
     for (auto it = btree.begin(); it != btree.end(); ++it)
         cout << *it << " ";
-    cout << endl;
+    cout << endl << endl;
 
+    // PRUEBA NUEVA: Prueba manual de Backward Inorder
+    cout << "Backward in order iterator (Manual loop): "<< endl;
+    for (auto it = btree.rbegin(); it != btree.rend(); ++it)
+        cout << *it << " ";
+    cout << endl << endl;
+
+    // Llamada a la función DFS que probará el resto de forwards y backwards
     print_dfs(btree);
+    cout << "Graban el árbol en binarytree.txt y luego lo lee de vuelta" << endl;
+    // Grabar la lista en un archivo
+    ofstream os("binarytree.txt");
+    os << btree << endl;
 
+    // Leer la lista desde un archivo
+    ifstream is("binarytree.txt");
+    is >> btree;
+    cout << btree << endl;
+    //copy constructor
+    cout << "copy constructor" << endl;
+    BinaryTree<AscendingBinaryTreeTrait<T1>> btree2(btree);
+    cout << btree2 << endl;
+    // move constructor
+    cout << "Move constructor" << endl;
+    BinaryTree<AscendingBinaryTreeTrait<T1>> btree3(std::move(btree));
+    cout << btree3 << endl;
+    // destructor
+    btree2.~BinaryTree();
+    btree3.~BinaryTree();
+
+    cout << btree2 << endl;
+    cout << btree3 << endl;
 }
 
 
