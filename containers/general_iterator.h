@@ -31,6 +31,10 @@ public:
     typename Container::value_type &operator*(){
         return m_pNode->getDataRef();
     }
+    Node* operator->()
+        {
+            return m_pNode;
+        }
 };
 
 

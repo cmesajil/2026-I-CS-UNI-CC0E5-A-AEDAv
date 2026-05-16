@@ -6,6 +6,7 @@
 #include <thread>
 #include "vector.h"
 #include "heap.h"
+#include "util.h"
 using namespace std;
 
 void AddOne(T1& n){

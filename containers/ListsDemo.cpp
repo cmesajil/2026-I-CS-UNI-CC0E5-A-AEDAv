@@ -171,9 +171,25 @@ void CircularDoubleLinkedListDemo(){
     cout << endl;
 
 }
+template <typename T>
+void print_dfs(BinaryTree<T>& btree) {
+    cout << "Inorder iterator: " << endl;
+    btree.print_inorder();
+    cout << endl;
+
+    cout << "Forward preorder iterator: " << endl;
+    btree.print_preorder();
+    cout << endl;
+
+    cout << "Forward postorder iterator: " << endl;
+    btree.print_postorder();
+    cout << endl;
+}
 
 void BinaryTreeDemo(){
-    BinaryTree<AscendingBinaryTreeTrait<int>> asc;
+    cout << "DEMO CIRCULAR DOUBLE LINKED LIST----------------------------" << endl<< endl;
+
+    BinaryTree<AscendingBinaryTreeTrait<T1>> asc;
 
     asc.insert(8, 8);
     asc.insert(3, 3);
@@ -184,6 +200,40 @@ void BinaryTreeDemo(){
     cout << "Ascending Tree: ";
     cout << asc;
     cout << endl;
+
+    BinaryTree<DescendingBinaryTreeTrait<T1>> desc;
+
+    desc.insert(8, 8);
+    desc.insert(3, 3);
+    desc.insert(10, 10);
+    desc.insert(1, 1);
+    desc.insert(6, 6);
+
+    cout << "Descending Tree: ";
+    cout << desc;
+    cout << endl;
+
+    BinaryTree<AscendingBinaryTreeTrait<T1>> btree;
+
+    btree.insert(8, 8);
+    btree.insert(3, 3);
+    btree.insert(10, 10);
+    btree.insert(1, 1);
+    btree.insert(6, 6);
+    btree.insert(14, 14);
+    btree.insert(4, 4);
+    btree.insert(7, 7);
+
+    cout << "Ascending Tree: ";
+    cout << btree;
+    cout << endl;
+    cout << "Forward in order iterator: "<< endl;
+    for (auto it = btree.begin(); it != btree.end(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+    print_dfs(btree);
+
 }
 
 
