@@ -9,6 +9,7 @@
 #include "CircularLinkedList.h"
 #include "CircularDoubleLinkedList.h"
 #include "BinaryTree.h"
+#include "AvlBinaryTree.h"
 // #include "circularlinkedlist.h"
 
 using namespace std;
@@ -272,9 +273,35 @@ void BinaryTreeDemo(){
     cout << btree3 << endl;
 }
 
+void AvlBinaryTree(){
+    std::cout << "--- Inicializando AVL Genérico por Traits ---" << std::endl;
+
+        // Instanciamos el árbol usando el Trait abstracto
+        AVLTree<AVLAscendingTrait<T1>> btree;
+
+        // Insertamos los datos de tu ejemplo anterior.
+        // Recuerda que un BST normal se desbalancearía al meter la secuencia,
+        // pero el AVL va a disparar rotaciones automáticas para mantenerse optimizado.
+        btree.insert(8, 8);
+        btree.insert(3, 3);
+        btree.insert(10, 10);
+        btree.insert(1, 1);
+        btree.insert(6, 6);
+        btree.insert(14, 14);
+        btree.insert(4, 4);
+        btree.insert(7, 7);
+        btree.insert(5, 5);
+
+        std::cout << "Recorrido Inorder del AVL (Formato -> (Dato, H:Altura)): " << std::endl;
+        // Llamada a la función DFS que probará el resto de forwards y backwards
+        print_dfs(btree);
+
+}
+
 
 void ListsDemo(){
     BinaryTreeDemo();
+    AvlBinaryTree();
     //LinkedListDemo();
     //CircularLinkedListDemo();
     //DoubleLinkedListDemo();

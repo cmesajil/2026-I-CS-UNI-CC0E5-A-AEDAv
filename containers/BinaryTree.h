@@ -21,36 +21,62 @@ template<typename Container, bool Reverse> class PostorderIterator;
 template<typename Trait> class BinaryTree;
 
 // =============================================================================
-// NODO DEL ÁRBOL BINARIO (ENCAPSULADO)
+// NODO DEL ÁRBOL BINARIO
 // =============================================================================
 
-template<typename T>
-class BinaryTreeNode {
-private:
+template<typename T, typename Derived>
+struct BinaryTreeNodeBase {
+
+    using value_type = T;
+
     T m_data;
     Ref m_ref;
-    BinaryTreeNode *parent;
-    BinaryTreeNode *m_pChild[2];
 
-    // Clases amigas: Tienen permiso exclusivo para acceder a los atributos privados
-    template<typename Container, bool Reverse> friend class InorderIterator;
-    template<typename Container, bool Reverse> friend class PreorderIterator;
-    template<typename Container, bool Reverse> friend class PostorderIterator;
-    template<typename Trait> friend class BinaryTree;
-    template<typename U> friend ostream& operator<<(ostream& os, BinaryTreeNode<U>& node);
+    Derived* parent;
+    Derived* m_pChild[2];
 
+    BinaryTreeNodeBase(T data, Ref ref)
+        : m_data(data),
+          m_ref(ref),
+          parent(nullptr),
+          m_pChild{nullptr, nullptr}
+    {}
+
+    Derived* getChild(int index) const {  return m_pChild[index];}
+    Derived* getParent()         const {  return parent;}
+    T getData()                  const { return m_data;}
+    T& getDataRef()             {return m_data;}
+    void setData(T data)        {m_data = data;}
+    Ref getRef()                const  {return m_ref;}
+    void setRef(Ref ref)        {m_ref = ref;}
+};
+
+template<typename T>
+class BinaryTreeNode :
+    public BinaryTreeNodeBase<T, BinaryTreeNode<T>>
+{
 public:
-    using value_type = T;
-    BinaryTreeNode(T data, Ref ref) : m_data(data), m_ref(ref), parent(nullptr), m_pChild{nullptr, nullptr} {}
+    using Base =
+        BinaryTreeNodeBase<T, BinaryTreeNode<T>>;
 
-    // Getters y Setters públicos para el usuario de la estructura
-    BinaryTreeNode* getChild(int index) const { return m_pChild[index]; }
-    BinaryTreeNode* getParent() const { return parent; }
-    T getData() const { return m_data; }
-    T& getDataRef() { return m_data; }
-    void setData(T data) { m_data = data; }
-    Ref getRef() const { return m_ref; }
-    void setRef(Ref ref) { m_ref = ref; }
+    using Base::Base;
+
+    using value_type = T;
+
+    template<typename Container, bool Reverse>
+    friend class InorderIterator;
+
+    template<typename Container, bool Reverse>
+    friend class PreorderIterator;
+
+    template<typename Container, bool Reverse>
+    friend class PostorderIterator;
+
+    template<typename Trait>
+    friend class BinaryTree;
+
+    template<typename U>
+    friend ostream& operator<<(ostream& os, BinaryTreeNode<U>& node);
 };
 
 template <typename T>
@@ -177,7 +203,7 @@ public:
     using Node       = typename Trait::Node;
     using Comp       = typename Trait::Comp;
     using Myself     = BinaryTree<Trait>;
-private:
+protected:
     Node *m_pRoot;
     Comp m_comp;
 
