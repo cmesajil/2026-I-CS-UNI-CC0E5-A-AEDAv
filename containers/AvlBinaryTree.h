@@ -5,23 +5,29 @@
 #include <algorithm>
 #include <mutex>
 #include <shared_mutex>
+#include <iostream>
 
-// 1. El nodo recibe el tipo de altura por plantilla
+// 1. El nodo recibe T y un HeightType
 template<typename T, typename HeightType = T1>
 struct AVLNode : public BinaryTreeNodeBase<T, AVLNode<T, HeightType>>
 {
     using Base = BinaryTreeNodeBase<T, AVLNode<T, HeightType>>;
     using value_type = T;
+    using height_type = HeightType;
+
+private:
     HeightType m_height;
 
+public:
     AVLNode(T data, Ref ref) : Base(data, ref), m_height(static_cast<HeightType>(1)) {}
 
     HeightType getHeight() const { return m_height; }
-    void setHeight(HeightType h) { m_height = h; }
+    void setHeight(HeightType h)  { m_height = h; }
 };
 
+// Sobrecarga del operador << configurado correctamente para dos plantillas
 template<typename T, typename H>
-ostream& operator<<(ostream& os, const AVLNode<T,H>& node)
+std::ostream& operator<<(std::ostream& os, const AVLNode<T, H>& node)
 {
     return os
         << "("
@@ -33,22 +39,20 @@ ostream& operator<<(ostream& os, const AVLNode<T,H>& node)
         << ")";
 }
 
-// 2. El Trait define las políticas de tipos
+// 2. El Trait define explícitamente las políticas de tipos
 template<typename T>
 struct AVLAscendingTrait : public BaseTrait<AVLNode<T, T1>, std::less<T>>
 {
     using height_type = T1;
 };
 
-
-
-// 3. El árbol AVL adaptado respetando el encapsulamiento privado de la base
+// 3. El árbol se adapta al Trait usando Getters y Setters de la clase base
 template<typename Trait>
 class AVLTree : public BinaryTree<Trait>
 {
 protected:
-    using Node       = typename BinaryTree<Trait>::Node;
-    using value_type = typename BinaryTree<Trait>::value_type;
+    using Node        = typename BinaryTree<Trait>::Node;
+    using value_type  = typename BinaryTree<Trait>::value_type;
     using height_type = typename Trait::height_type;
 
     using BinaryTree<Trait>::m_pRoot;
@@ -64,20 +68,19 @@ public:
     }
 
 private:
-    // Usa el método público getChild() de la base de forma segura
     height_type height(Node* node) const
     {
         return node ? node->getHeight() : static_cast<height_type>(0);
     }
 
-    // Usa getChild() para calcular el factor de balance de manera abstracta
+    // Corregido: Uso de getChild(0) y getChild(1) en lugar de m_pChild[]
     height_type getBalance(Node* node) const
     {
         if (!node) return static_cast<height_type>(0);
         return height(node->getChild(0)) - height(node->getChild(1));
     }
 
-    // Actualiza la altura llamando a getChild()
+    // Corregido: Uso de getChild() para respetar el encapsulamiento
     void updateHeight(Node* node)
     {
         if (node) {
@@ -85,10 +88,10 @@ private:
         }
     }
 
-    // Rotaciones adaptadas completamente a Getters y Setters
-    Node* rotate(Node* y, int branch)
+
+    Node* rotate(Node* y, size_t branch)
     {
-        int opposite = 1 - branch;
+        size_t opposite = 1 - branch;
         Node* x = y->getChild(branch);
         Node* T2 = x->getChild(opposite);
 
@@ -109,15 +112,15 @@ private:
     {
         if (node == nullptr) {
             Node* newNode = new Node(data, ref);
-            newNode->setParent(parent); // <-- Modificado a setter público
+            newNode->setParent(parent);
             return newNode;
         }
 
-        // Usamos getData() para extraer el valor encapsulado
-        int branch = m_comp(node->getData(), data) ? 1 : 0;
+
+        size_t branch = m_comp(node->getData(), data) ? 1 : 0;
 
         Node* nextChild = internal_insert(node->getChild(branch), node, data, ref);
-        node->setChild(branch, nextChild); // <-- Modificado a setter público
+        node->setChild(branch, nextChild);
 
         updateHeight(node);
         height_type balance = getBalance(node);
