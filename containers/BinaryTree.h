@@ -26,7 +26,7 @@ template<typename Trait> class BinaryTree;
 
 template<typename T, typename Derived>
 class BinaryTreeNodeBase {
-private: // <-- Totalmente privado para que tu profesor esté feliz
+private:
     T m_data;
     Ref m_ref;
     Derived* parent;
@@ -354,11 +354,10 @@ template<typename Trait>
 void BinaryTree<Trait>::internal_insert(Node*& pNode, Node* parent, value_type data, Ref ref) {
     if (pNode == nullptr) {
         pNode = new Node(data, ref);
-        pNode->setParent(parent); // <-- Usando setter público
+        pNode->setParent(parent);
         return;
     }
 
-    // Usando getter público para comparar la data de forma segura
     auto branch = m_comp(pNode->getData(), data);
 
     // Pasamos la referencia al puntero del hijo usando la función pública getChild
