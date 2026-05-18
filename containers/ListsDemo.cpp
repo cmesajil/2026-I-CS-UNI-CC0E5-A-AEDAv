@@ -265,7 +265,9 @@ void BinaryTreeDemo(){
     cout << "Move constructor" << endl;
     BinaryTree<AscendingBinaryTreeTrait<T1>> btree3(std::move(btree));
     cout << btree3 << endl;
+    cout << btree << endl;
     // destructor
+    cout << "destructor" << endl;
     btree2.~BinaryTree();
     btree3.~BinaryTree();
 

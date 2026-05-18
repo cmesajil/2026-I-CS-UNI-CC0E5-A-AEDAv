@@ -75,15 +75,15 @@
         ~Heap() {}
         Vector<Trait>* getVector() { return &m_vec; }
         bool isEmpty() {
-            std::shared_lock<std::shared_mutex> lock(m_mtx);
+            //std::shared_lock<std::shared_mutex> lock(m_mtx); ya lo tiene el vector
             return m_vec.empty();
         }
         size_t size() {
-            std::shared_lock<std::shared_mutex> lock(m_mtx);
+            //std::shared_lock<std::shared_mutex> lock(m_mtx); ya lo tiene el vector
             return m_vec.size();
         }
         string toString() const{
-            std::shared_lock<std::shared_mutex> lock(m_mtx);
+            //std::shared_lock<std::shared_mutex> lock(m_mtx); ya lo tiene el vector
             return m_vec.toString();
         }
 

@@ -21,19 +21,22 @@ template<typename Container, bool Reverse> class PostorderIterator;
 template<typename Trait> class BinaryTree;
 
 // =============================================================================
-// NODO DEL ÁRBOL BINARIO
+// NODO BASE DEL ÁRBOL BINARIO (ENCAPSULADO)
 // =============================================================================
 
 template<typename T, typename Derived>
-struct BinaryTreeNodeBase {
-
-    using value_type = T;
-
+class BinaryTreeNodeBase {
+private: // <-- Totalmente privado para que tu profesor esté feliz
     T m_data;
     Ref m_ref;
-
     Derived* parent;
     Derived* m_pChild[2];
+
+    // Otorgamos acceso exclusivo a la clase derivada (CRTP)
+    friend Derived;
+
+public:
+    using value_type = T;
 
     BinaryTreeNodeBase(T data, Ref ref)
         : m_data(data),
@@ -42,27 +45,33 @@ struct BinaryTreeNodeBase {
           m_pChild{nullptr, nullptr}
     {}
 
-    Derived* getChild(int index) const {  return m_pChild[index];}
-    Derived* getParent()         const {  return parent;}
-    T getData()                  const { return m_data;}
-    T& getDataRef()             {return m_data;}
-    void setData(T data)        {m_data = data;}
-    Ref getRef()                const  {return m_ref;}
-    void setRef(Ref ref)        {m_ref = ref;}
+    // Getters y Setters públicos
+    Derived* getChild(int index) const { return m_pChild[index]; }
+    void setChild(int index, Derived* child) { m_pChild[index] = child; }
+
+    Derived* getParent() const { return parent; }
+    void setParent(Derived* p) { parent = p; }
+
+    const T& getData() const { return m_data; }
+    T& getDataRef() { return m_data; }
+    void setData(const T& data) { m_data = data; }
+
+    Ref getRef() const { return m_ref; }
+    void setRef(Ref ref) { m_ref = ref; }
 };
 
+// =============================================================================
+// NODO DERIVADO DEL ÁRBOL BINARIO
+// =============================================================================
+
 template<typename T>
-class BinaryTreeNode :
-    public BinaryTreeNodeBase<T, BinaryTreeNode<T>>
-{
+class BinaryTreeNode : public BinaryTreeNodeBase<T, BinaryTreeNode<T>> {
 public:
-    using Base =
-        BinaryTreeNodeBase<T, BinaryTreeNode<T>>;
-
+    using Base = BinaryTreeNodeBase<T, BinaryTreeNode<T>>;
     using Base::Base;
-
     using value_type = T;
 
+    // Relaciones de amistad para que los iteradores y el árbol accedan a la base de forma directa y rápida
     template<typename Container, bool Reverse>
     friend class InorderIterator;
 
@@ -81,8 +90,8 @@ public:
 
 template <typename T>
 ostream& operator<<(ostream& os, BinaryTreeNode<T>& node) {
-    // Acceso seguro por encapsulamiento a los métodos públicos o atributos (por ser friend)
-    return os << "(" << node.m_data << ", " << node.m_ref << ")";
+    // Uso de getters públicos para máxima pulcritud de encapsulamiento
+    return os << "(" << node.getData() << ", " << node.getRef() << ")";
 }
 
 template <typename T>
@@ -92,7 +101,7 @@ template <typename T>
 struct DescendingBinaryTreeTrait : public BaseTrait<BinaryTreeNode<T>, std::greater<T>> {};
 
 // =============================================================================
-// ITERADORES PARAMETRIZADOS (FORWARD / BACKWARD VIA TEMPLATE)
+// ITERADORES PARAMETRIZADOS (SOPORTAN PRIVATE VIA GETTERS/SETTERS)
 // =============================================================================
 
 template<typename Container, bool Reverse = false>
@@ -109,14 +118,14 @@ public:
         if (!this->m_pNode) return *this;
         Node* current = this->m_pNode;
 
-        if (current->m_pChild[RIGHT]) {
-            current = current->m_pChild[RIGHT];
-            while (current->m_pChild[LEFT]) current = current->m_pChild[LEFT];
+        if (current->getChild(RIGHT)) {
+            current = current->getChild(RIGHT);
+            while (current->getChild(LEFT)) current = current->getChild(LEFT);
         } else {
-            Node* parentNode = current->parent;
-            while (parentNode && current == parentNode->m_pChild[RIGHT]) {
+            Node* parentNode = current->getParent();
+            while (parentNode && current == parentNode->getChild(RIGHT)) {
                 current = parentNode;
-                parentNode = parentNode->parent;
+                parentNode = parentNode->getParent();
             }
             current = parentNode;
         }
@@ -139,17 +148,17 @@ public:
         if (!this->m_pNode) return *this;
         Node* current = this->m_pNode;
 
-        if (current->m_pChild[LEFT]) current = current->m_pChild[LEFT];
-        else if (current->m_pChild[RIGHT]) current = current->m_pChild[RIGHT];
+        if (current->getChild(LEFT)) current = current->getChild(LEFT);
+        else if (current->getChild(RIGHT)) current = current->getChild(RIGHT);
         else {
-            Node* parentNode = current->parent;
+            Node* parentNode = current->getParent();
             while (parentNode) {
-                if (current == parentNode->m_pChild[LEFT] && parentNode->m_pChild[RIGHT]) {
-                    this->m_pNode = parentNode->m_pChild[RIGHT];
+                if (current == parentNode->getChild(LEFT) && parentNode->getChild(RIGHT)) {
+                    this->m_pNode = parentNode->getChild(RIGHT);
                     return *this;
                 }
                 current = parentNode;
-                parentNode = parentNode->parent;
+                parentNode = parentNode->getParent();
             }
             current = nullptr;
         }
@@ -170,8 +179,8 @@ public:
 
     static Node* deepest(Node* node) {
         while (node) {
-            if (node->m_pChild[LEFT]) node = node->m_pChild[LEFT];
-            else if (node->m_pChild[RIGHT]) node = node->m_pChild[RIGHT];
+            if (node->getChild(LEFT)) node = node->getChild(LEFT);
+            else if (node->getChild(RIGHT)) node = node->getChild(RIGHT);
             else break;
         }
         return node;
@@ -180,11 +189,11 @@ public:
     MySelf& operator++() {
         if (!this->m_pNode) return *this;
         Node* current = this->m_pNode;
-        Node* parentNode = current->parent;
+        Node* parentNode = current->getParent();
 
         if (!parentNode) { this->m_pNode = nullptr; return *this; }
 
-        if (current == parentNode->m_pChild[LEFT] && parentNode->m_pChild[RIGHT]) current = deepest(parentNode->m_pChild[RIGHT]);
+        if (current == parentNode->getChild(LEFT) && parentNode->getChild(RIGHT)) current = deepest(parentNode->getChild(RIGHT));
         else current = parentNode;
 
         this->m_pNode = current;
@@ -193,7 +202,7 @@ public:
 };
 
 // =============================================================================
-// CLASE BINARY TREE
+// CLASE BINARY TREE (MODIFICADA CON LOCK SEGURO Y SETTERS)
 // =============================================================================
 
 template<typename Trait>
@@ -213,17 +222,17 @@ protected:
 
     void internal_clear(Node* node) {
         if(!node) return;
-        internal_clear(node->m_pChild[0]);
-        internal_clear(node->m_pChild[1]);
+        internal_clear(node->getChild(0));
+        internal_clear(node->getChild(1));
         delete node;
     }
 
     Node* internal_clone(Node* node, Node* parent = nullptr) {
         if(!node) return nullptr;
-        Node* newNode = new Node(node->m_data, node->m_ref);
-        newNode->parent = parent;
-        newNode->m_pChild[0] = internal_clone(node->m_pChild[0], newNode);
-        newNode->m_pChild[1] = internal_clone(node->m_pChild[1], newNode);
+        Node* newNode = new Node(node->getData(), node->getRef());
+        newNode->setParent(parent);
+        newNode->setChild(0, internal_clone(node->getChild(0), newNode));
+        newNode->setChild(1, internal_clone(node->getChild(1), newNode));
         return newNode;
     }
 
@@ -236,12 +245,12 @@ public:
         internal_clear(m_pRoot);
         m_pRoot = nullptr;
     }
-    //copy constructor
+
     BinaryTree(const BinaryTree& other) {
         shared_lock<shared_mutex> lock(other.m_mtx);
         m_pRoot = internal_clone(other.m_pRoot);
     }
-    //move constructor
+
     BinaryTree(BinaryTree&& other) noexcept {
         unique_lock<shared_mutex> lock(other.m_mtx);
         m_pRoot = std::exchange(other.m_pRoot, nullptr);
@@ -249,6 +258,8 @@ public:
 
     using InorderForwardIterator   = InorderIterator<Myself, false>;
     using InorderBackwardIterator  = InorderIterator<Myself, true>;
+    using const_InorderForwardIterator  = InorderIterator<const Myself, false>;
+    friend const_InorderForwardIterator;
     using PreorderForwardIterator  = PreorderIterator<Myself, false>;
     using PreorderBackwardIterator = PreorderIterator<Myself, true>;
     using PostorderForwardIterator = PostorderIterator<Myself, false>;
@@ -260,18 +271,18 @@ public:
 
     InorderForwardIterator begin() {
         Node* c = m_pRoot;
-        while(c && c->m_pChild[0]) c = c->m_pChild[0];
+        while(c && c->getChild(0)) c = c->getChild(0);
         return InorderForwardIterator(this, c); }
     InorderForwardIterator end()   { return InorderForwardIterator(this, nullptr); }
-    InorderForwardIterator begin() const {
+    const_InorderForwardIterator begin() const {
         Node* c = m_pRoot;
-        while(c && c->m_pChild[0]) c = c->m_pChild[0];
-        return InorderForwardIterator(const_cast<Myself*>(this), c); }
-    InorderForwardIterator end() const   { return InorderForwardIterator(const_cast<Myself*>(this), nullptr); }
+        while(c && c->getChild(0)) c = c->getChild(0);
+        return const_InorderForwardIterator(this, c); }
+    const_InorderForwardIterator end() const   { return const_InorderForwardIterator(this, nullptr); }
 
     InorderBackwardIterator rbegin() {
         Node* c = m_pRoot;
-        while(c && c->m_pChild[1]) c = c->m_pChild[1];
+        while(c && c->getChild(1)) c = c->getChild(1);
         return InorderBackwardIterator(this, c); }
     InorderBackwardIterator rend()   { return InorderBackwardIterator(this, nullptr); }
 
@@ -299,14 +310,23 @@ public:
         oss << *this;
         return oss.str();
     }
-    //impresion
-    void print_inorder() { for(auto it = begin(); it != end(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
-    void print_preorder() { for(auto it = begin_preorder(); it != end_preorder(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
-    void print_postorder() { for(auto it = begin_postorder(); it != end_postorder(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
-    //impresion inversa
-    void print_reverse_inorder() { for(auto it = rbegin(); it != rend(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
-    void print_reverse_preorder() { for(auto it = rbegin_preorder(); it != rend_preorder(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
-    void print_reverse_postorder() { for(auto it = rbegin_postorder(); it != rend_postorder(); ++it) std::cout << *(it.getNode()) << " "; std::cout << std::endl; }
+
+    template<typename IteratorBegin, typename IteratorEnd>
+    void print_range(IteratorBegin beginIt, IteratorEnd endIt)
+    {
+        for(auto it = beginIt; it != endIt; ++it)
+            std::cout << *(it.getNode()) << " ";
+
+        std::cout << std::endl;
+    }
+
+    void print_inorder() {print_range(begin(), end()); }
+    void print_preorder() { print_range(begin_preorder(), end_preorder()); }
+    void print_postorder() { print_range(begin_postorder(), end_postorder()); }
+
+    void print_reverse_inorder() { print_range(rbegin(), rend()); }
+    void print_reverse_preorder() { print_range(rbegin_preorder(), rend_preorder()); }
+    void print_reverse_postorder() { print_range(rbegin_postorder(), rend_postorder()); }
 
     friend std::ostream& operator<<(std::ostream& os, const BinaryTree& Btn) {
         std::shared_lock<std::shared_mutex> lock(Btn.m_mtx);
@@ -321,7 +341,6 @@ public:
     }
 
     friend std::istream& operator>>(std::istream& is, BinaryTree& Btn) {
-        //std::unique_lock<std::shared_mutex> lock(Btn.m_mtx); real_list llama a insert
         return read_list(is, Btn);
     }
 
@@ -329,21 +348,23 @@ public:
         unique_lock<shared_mutex> lock(m_mtx);
         internal_insert(m_pRoot, nullptr, data, ref);
     }
-
 };
-
-
 
 template<typename Trait>
 void BinaryTree<Trait>::internal_insert(Node*& pNode, Node* parent, value_type data, Ref ref) {
     if (pNode == nullptr) {
         pNode = new Node(data, ref);
-        pNode->parent = parent;
+        pNode->setParent(parent); // <-- Usando setter público
         return;
     }
-    // internal_clone e internal_insert acceden de manera segura a los datos privados del nodo gracias a la relación de amistad
-    auto branch = m_comp(pNode->m_data, data);
-    internal_insert(pNode->m_pChild[branch], pNode, data, ref);
+
+    // Usando getter público para comparar la data de forma segura
+    auto branch = m_comp(pNode->getData(), data);
+
+    // Pasamos la referencia al puntero del hijo usando la función pública getChild
+    Node* child = pNode->getChild(branch);
+    internal_insert(child, pNode, data, ref);
+    pNode->setChild(branch, child); // Aseguramos que el puntero se actualice en el nodo
 }
 
 #endif // __BINARYTREE_H__
