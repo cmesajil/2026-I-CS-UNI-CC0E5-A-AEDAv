@@ -62,6 +62,10 @@ void DemoVector(){
 
     Print(v1, of);
     Print(v2, of);
+
+    std::cout << "Haciendo pop_back y obteniendo nodo :\n";
+    std::cout << v1.pop_back_unsafe()<< "\n";
+    std::cout << v1 << endl;
 }
 
 void DemoHeap(){
@@ -78,6 +82,10 @@ void DemoHeap(){
     std::cout << "[MinHeap] Vector interno (debería priorizar menores en la raíz):\n";
     std::cout << heap << "\n";
     std::cout << "Peek mínimo: " << heap.peek().getData() << "\n\n";
+
+    std::cout << "Haciendo extract y obteniendo nodo :\n";
+    std::cout << heap.extract()<< "\n";
+    std::cout << heap << endl;
 
     Heap<MaxHeapTrait<T1>> maxheap(3);
     maxheap.insert(T1(16), Ref(16));

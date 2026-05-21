@@ -120,15 +120,30 @@
             heapifyUp(m_vec.size() - 1);
         }
 
-        // Extrae el elemento de mayor o menor prioridad (depende del heap)
-        void extract() {
-            unique_lock<shared_mutex> lock(m_mtx);
-            if (m_vec.empty()) return;
 
-            m_vec[0] = std::move(m_vec[m_vec.size() - 1]);
-            // Hacemos el pop sin activar otros candados
+        // Extrae el elemento de mayor o menor prioridad (depende del heap) y lo retorna
+        Node extract() {
+            unique_lock<shared_mutex> lock(m_mtx);
+
+            // 1. Si el Heap está vacío, retornamos un nodo por defecto (vacío)
+            if (m_vec.empty()) {
+                return Node();
+            }
+            // 2. RESPALDAMOS la raíz actual (este es el nodo que vamos a retornar)
+            Node root_node = m_vec[0];
+            // 3. Si solo hay un elemento, basta con sacarlo del vector sin hacer heapifyDown
+            if (m_vec.size() == 1) {
+                m_vec.pop_back_unsafe();
+                return root_node;
+            }
+            // 4. Movemos el último elemento a la raíz
+            m_vec[0] = std::move(m_vec[m_vec.size() - 1]); //exchange copiaria
+            // 5. Eliminamos la última posición duplicada de forma segura
             m_vec.pop_back_unsafe();
+            // 6. Rebalanceamos el árbol hacia abajo para mantener la propiedad de Heap
             heapifyDown(0);
+            // 7. Retornamos el nodo que salvamos en el paso 2
+            return root_node;
         }
 
         // Obtiene el elemento de mayor o menor prioridad (depende del heap)

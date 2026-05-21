@@ -58,13 +58,13 @@
         T    getData() const { return m_data; }
         T&   getDataRef() { return m_data; }
         void setData(T data) { m_data = data; }
-        Ref  getRef() { return m_ref; }
+        Ref  getRef() const { return m_ref; }
         void setRef(Ref ref) { m_ref = ref; }
 
     };
 
     template <typename T>
-    ostream& operator<<(ostream& os, VectorNode<T>& node){
+    ostream& operator<<(ostream& os,const VectorNode<T>& node){
         return os << "(" << node.getData() << ", " << node.getRef() << ")";
     }
 
@@ -141,12 +141,16 @@
             ::ForEach(rbegin(), rend(), func, std::forward<Args>(args)... );
         }
 
-
-        void pop_back_unsafe() {
+        //devuelve y borra
+        Node pop_back_unsafe() {
+            Node removed_node;
             // Sin candados. Diseñada solo para estructuras hijas como el Heap que ya están protegidas.
             if (m_size > 0) {
+                removed_node = m_data[m_size - 1];
                 m_size--;
             }
+
+            return removed_node;
         }
     };
 
