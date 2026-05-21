@@ -66,6 +66,16 @@ public:
         std::unique_lock<std::shared_mutex> lock(this->m_mtx);
         m_pRoot = internal_insert(m_pRoot, nullptr, data, ref);
     }
+    Node* search(const value_type& value) const
+    {
+        std::shared_lock<std::shared_mutex>
+            lock(this->m_mtx);
+
+        return internal_search(
+            m_pRoot,
+            value
+        );
+    }
 
 private:
     height_type height(Node* node) const
@@ -86,6 +96,33 @@ private:
         if (node) {
             node->setHeight(static_cast<height_type>(1) + std::max(height(node->getChild(0)), height(node->getChild(1))));
         }
+    }
+
+
+
+    Node* internal_search(
+        Node* node,
+        const value_type& value
+    ) const
+    {
+        if (!node)
+            return nullptr;
+
+        if (node->getData() == value)
+            return node;
+
+        size_t branch =
+            m_comp(
+                node->getData(),
+                value
+            )
+            ? 1
+            : 0;
+
+        return internal_search(
+            node->getChild(branch),
+            value
+        );
     }
 
 

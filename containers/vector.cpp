@@ -7,6 +7,8 @@
 #include "vector.h"
 #include "heap.h"
 #include "util.h"
+#include "AvlHashTable.h"
+
 using namespace std;
 
 void AddOne(T1& n){
@@ -101,6 +103,53 @@ void DemoHeap(){
     is >> readheap;
     cout << readheap << endl;
     is.close();
+}
+
+void DemoHash()
+{
+    std::cout << "=== 1. PRUEBA DE CONSTRUCTOR Y OPERATOR [] ===\n";
+    // Crear una tabla hash con 5 baldes iniciales para forzar algunas colisiones controladas
+    AVLHashTable<int, std::string> tabla(5);
+
+    // Probamos la inserción usando m[key] = value;
+    tabla[10] = "Diez";
+    tabla[20] = "Veinte"; // Mismo balde hash que 10 si es m_bucketCount=5 (10%5 == 20%5 == 0)
+    tabla[5]  = "Cinco";
+    tabla[3]  = "Tres";
+
+    std::cout << "Valor en m[10]: " << tabla[10] << "\n";
+    std::cout << "Valor en m[20]: " << tabla[20] << "\n";
+
+    std::cout << "\n=== 2. PRUEBA DE RECORRIDO RANGED FOR (Structured Bindings) ===\n";
+    // Evaluando: for (const auto& [key, value] : m)
+    for (const auto& [key, value] : tabla) {
+        std::cout << "Clave: " << key << " -> Valor: " << value << "\n";
+    }
+
+    std::cout << "\n=== 3. PRUEBA DE OPERATOR << (Impresión directa de tabla) ===\n";
+    std::cout << "Estructura completa de la Tabla: " << tabla << "\n";
+
+    std::cout << "\n=== 4. PRUEBA DE CONSTRUCTORES COPIA Y MOVIMIENTO ===\n";
+    // Probando Constructor copia profunda
+    std::cout << "Clonando la tabla original...\n";
+    AVLHashTable<int, std::string> tablaClon(tabla);
+    std::cout << "Tabla Clonada (Copia): " << tablaClon << "\n";
+
+    // Probando Move Constructor
+    std::cout << "Moviendo recursos a una nueva tabla...\n";
+    AVLHashTable<int, std::string> tablaMovida(std::move(tablaClon));
+    std::cout << "Nueva tabla Destino: " << tablaMovida << "\n";
+
+    std::cout << "\n=== 5. PRUEBA DE OPERATOR >> (Deserialización desde Stream) ===\n";
+    std::stringstream streamDeEntrada;
+    // Cargamos un string stream simulando una entrada por consola de pares "Key Value"
+    streamDeEntrada << "15 Quince 42 Respuesta 7 Siete";
+
+    AVLHashTable<int, std::string> tablaStream(7);
+    streamDeEntrada >> tablaStream;
+
+    std::cout << "Tabla poblada mediante operador >>:\n" << tablaStream << "\n";
+    std::cout << "\n=== FIN DE LA DEMO ===\n";
 }
 
 void DemoConcurrentVector(){
