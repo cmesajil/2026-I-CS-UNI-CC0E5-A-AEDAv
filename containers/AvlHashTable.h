@@ -1,37 +1,37 @@
 #ifndef __AVLTREE_HASHTABLE_H__
 #define __AVLTREE_HASHTABLE_H__
 
-#include "vector.h"
-#include "AvlBinaryTree.h"
-
 #include <functional>
-#include <optional>
-#include <shared_mutex>
-#include <mutex>
 #include <iostream>
 #include <utility>
-#include <stdexcept>
 #include <vector>
-#include "../types.h" // Ref = long;
+#include <cstddef>
+#include <stdexcept>
+
+#include "vector.h"
+#include "AvlBinaryTree.h"
+#include "../types.h"
 
 // ===============================================================
-// 1. TRAITS TOTALMENTE COMPATIBLES
+// 1. TRAITS Y ESTRUCTURAS DE SOPORTE PARA ESTRUCTURING BINDING
 // ===============================================================
-template<typename Key, typename HeightType = int>
+template<typename Key, typename HeightType = size_t>
 struct AVLHashBucketTrait : public BaseTrait<AVLNode<Key, HeightType>, std::less<Key>> {
     using height_type = HeightType;
+    using node_type   = AVLNode<Key, HeightType>;
 };
 
-template<typename Key, typename HeightType = int>
+template<typename Key, typename Value, typename HeightType = size_t>
 struct HashBucketsVectorTrait {
-    using BucketAVL  = AVLTree<AVLHashBucketTrait<Key, HeightType>>;
-    using BucketPtr  = BucketAVL*;
-    using value_type = BucketPtr;
-    using Node       = VectorNode<BucketPtr>;
-    using Comp       = std::less<BucketPtr>;
+    using BucketAVL   = AVLTree<AVLHashBucketTrait<Key, HeightType>>;
+    using BucketPtr   = BucketAVL*;
+    using value_type  = BucketPtr;
+    using Node        = VectorNode<BucketPtr>;
+    using Comp        = std::less<BucketPtr>;
+    using key_type    = Key;
+    using mapped_type = Value;
 };
 
-// Struct para dar soporte a Structured Bindings (C++17)
 template <typename Key, typename Value>
 struct AVLHashKeyValuePair {
     const Key& key;
@@ -58,16 +58,16 @@ namespace std {
 // 2. CLASS AVLHASHTABLE
 // ===============================================================
 template<
-    typename Key,
-    typename Value,
-    typename Hash = std::hash<Key>,
-    typename HeightType = int
+    typename VectorTrait,
+    typename Hash = std::hash<typename VectorTrait::key_type>
 >
 class AVLHashTable {
 public:
-    using BucketType   = AVLTree<AVLHashBucketTrait<Key, HeightType>>;
-    using BucketPtr    = BucketType*;
-    using TableType    = Vector<HashBucketsVectorTrait<Key, HeightType>>;
+    using Key          = typename VectorTrait::key_type;
+    using Value        = typename VectorTrait::mapped_type;
+    using BucketType   = typename VectorTrait::BucketAVL;
+    using BucketPtr    = typename VectorTrait::BucketPtr;
+    using TableType    = Vector<VectorTrait>;
     using size_type    = std::size_t;
     using KeyValuePair = AVLHashKeyValuePair<Key, Value>;
 
@@ -80,117 +80,82 @@ private:
         return m_hashFunction(key) % m_bucketCount;
     }
 
+    void setBucketAt(size_type index, BucketPtr newBucket) {
+        m_table[index].setData(newBucket);
+    }
+
 public:
-    // Constructor por defecto
     explicit AVLHashTable(size_type bucketCount = 101)
         : m_bucketCount(bucketCount), m_table(bucketCount)
     {
         for (size_type i = 0; i < m_bucketCount; ++i) {
-            m_table.push_back(new BucketType(), 0);
+            setBucketAt(i, new BucketType());
         }
     }
 
-    // Destructor (Basado en iterador del Vector que da punteros directos)
     ~AVLHashTable() {
-        for (auto bucket : m_table) {
+        for (size_type i = 0; i < m_bucketCount; ++i) {
+            BucketPtr bucket = m_table[i].getData();
             if (bucket) {
+                std::vector<Value*> valuesToDelete;
+                bucket->ForEach([&](const Key& keyItem) {
+                    auto* node = bucket->search(keyItem);
+                    if (node && node->getRef()) {
+                        valuesToDelete.push_back(reinterpret_cast<Value*>(node->getRef()));
+                    }
+                });
                 delete bucket;
+                for (Value* val : valuesToDelete) delete val;
             }
         }
     }
 
-    // Constructor de Copia
-    // Constructor de Copia
-        AVLHashTable(const AVLHashTable& other)
-            : m_bucketCount(other.m_bucketCount),
-              m_table(),
-              m_hashFunction(other.m_hashFunction)
-        {
-            for (const auto oldBucket : other.m_table) {
-                BucketPtr newBucket = new BucketType();
-
-                if (oldBucket) {
-                    // Paso 1: Extraer las llaves de manera segura y liberar el mutex del AVL
-                    std::vector<Key> keysInBucket;
-                    oldBucket->ForEach([&](const Key& keyItem) {
-                        keysInBucket.push_back(keyItem);
-                    });
-
-                    // Paso 2: Buscar y clonar los datos uno por uno fuera de ForEach
-                    for (const auto& keyItem : keysInBucket) {
-                        auto* avlNode = oldBucket->search(keyItem);
-                        if (avlNode) {
-                            Value* heapVal = new Value(*reinterpret_cast<Value*>(avlNode->getRef()));
-                            newBucket->insert(keyItem, reinterpret_cast<Ref>(heapVal));
-                        }
-                    }
-                }
-                m_table.push_back(newBucket, 0);
-            }
+    // 1. CONSTRUCTOR COPIA
+    AVLHashTable(const AVLHashTable& other)
+        : m_bucketCount(other.m_bucketCount),
+          m_table(other.m_bucketCount),
+          m_hashFunction(other.m_hashFunction)
+    {
+        for (size_type i = 0; i < m_bucketCount; ++i) {
+            setBucketAt(i, new BucketType());
         }
 
-    // Operador de Asignación por Copia
-        AVLHashTable& operator=(const AVLHashTable& other) {
-            if (this != &other) {
-                for (auto bucket : m_table) {
-                    if (bucket) delete bucket;
-                }
-                m_table = TableType();
-
-                m_bucketCount = other.m_bucketCount;
-                m_hashFunction = other.m_hashFunction;
-
-                for (const auto oldBucket : other.m_table) {
-                    BucketPtr newBucket = new BucketType();
-
-                    if (oldBucket) {
-                        // Paso 1: Extraer llaves y liberar mutex del AVL
-                        std::vector<Key> keysInBucket;
-                        oldBucket->ForEach([&](const Key& keyItem) {
-                            keysInBucket.push_back(keyItem);
-                        });
-
-                        // Paso 2: Buscar y clonar nodos fuera de ForEach
-                        for (const auto& keyItem : keysInBucket) {
-                            auto* avlNode = oldBucket->search(keyItem);
-                            if (avlNode) {
-                                Value* heapVal = new Value(*reinterpret_cast<Value*>(avlNode->getRef()));
-                                newBucket->insert(keyItem, reinterpret_cast<Ref>(heapVal));
-                            }
-                        }
+        for (size_type i = 0; i < m_bucketCount; ++i) {
+            const auto oldBucket = other.m_table[i].getData();
+            if (oldBucket) {
+                std::vector<std::pair<Key, Value>> extractedData;
+                oldBucket->ForEach([&](const Key& keyItem) {
+                    auto* avlNode = oldBucket->search(keyItem);
+                    if (avlNode && avlNode->getRef()) {
+                        extractedData.push_back({keyItem, *reinterpret_cast<Value*>(avlNode->getRef())});
                     }
-                    m_table.push_back(newBucket, 0);
+                });
+
+                BucketPtr newBucket = m_table[i].getData();
+                if (newBucket) {
+                    for (const auto& [keyItem, rawValue] : extractedData) {
+                        Value* heapVal = new Value(rawValue);
+                        newBucket->insert(keyItem, reinterpret_cast<Ref>(heapVal));
+                    }
                 }
             }
-            return *this;
         }
+    }
 
-    // Constructor de Movimiento
+    // 2. MOVE CONSTRUCTOR
     AVLHashTable(AVLHashTable&& other) noexcept
         : m_bucketCount(std::exchange(other.m_bucketCount, 0)),
           m_table(std::move(other.m_table)),
           m_hashFunction(std::move(other.m_hashFunction))
     {
-    }
-
-    // Operador de Asignación por Movimiento
-    AVLHashTable& operator=(AVLHashTable&& other) noexcept {
-        if (this != &other) {
-            for (auto bucket : m_table) {
-                if (bucket) delete bucket;
-            }
-
-            m_bucketCount = std::exchange(other.m_bucketCount, 0);
-            m_table = std::move(other.m_table);
-            m_hashFunction = std::move(other.m_hashFunction);
+        for (size_type i = 0; i < other.m_bucketCount; ++i) {
+            other.setBucketAt(i, nullptr);
         }
-        return *this;
     }
 
-    // Acceso por corchetes (REPARADO: Usa .getData() sobre el Node de Vector)
+    // 3. ASIGNACIÓN ACCESO m[5] = 3
     Value& operator[](const Key& key) {
         size_type index = getBucketIndex(key);
-        // m_table[index] devuelve VectorNode&, llamamos a .getData() para obtener BucketPtr
         BucketType& avlBucket = *(m_table[index].getData());
         auto* node = avlBucket.search(key);
 
@@ -200,89 +165,41 @@ public:
             node = avlBucket.search(key);
             if (node == nullptr) {
                 delete pNewValue;
-                throw std::runtime_error("Fallo critico de insercion en arbol AVL.");
+                throw std::runtime_error("Fallo critico de insercion AVL.");
             }
         }
         return *reinterpret_cast<Value*>(node->getRef());
     }
 
-    // Inserción directa (REPARADO: Usa .getData())
-    void insert(const Key& key, const Value& value) {
-        size_type index = getBucketIndex(key);
-        BucketType& avlBucket = *(m_table[index].getData());
-
-        auto* node = avlBucket.search(key);
-        if (node) {
-            *reinterpret_cast<Value*>(node->getRef()) = value;
-        } else {
-            Value* heapVal = new Value(value);
-            avlBucket.insert(key, reinterpret_cast<Ref>(heapVal));
-        }
-    }
-
-    // Búsqueda
-    std::optional<Value> find(const Key& key) const {
-        size_type index = getBucketIndex(key);
-        const BucketType* avlBucket = m_table[index].getData();
-        if (avlBucket) {
-            auto* node = avlBucket->search(key);
-            if (node != nullptr) {
-                return *reinterpret_cast<Value*>(node->getRef());
-            }
-        }
-        return std::nullopt;
-    }
-
-    // Verificación de existencia
-    bool contains(const Key& key) const {
-        size_type index = getBucketIndex(key);
-        const BucketType* avlBucket = m_table[index].getData();
-        return avlBucket && avlBucket->search(key) != nullptr;
-    }
-
-    // ===============================================================
-    // CONST_ITERATOR
-    // ===============================================================
+    // 4. CONST_ITERATOR PARA SOPORTAR: for (const auto& [key, value] : m)
     class ConstIterator {
-    private:
+    public:
         const AVLHashTable* m_pTable;
         size_type m_currentBucket;
         std::vector<std::pair<Key, Value>> m_flatElements;
         size_type m_elementIndex;
 
         void flattenCurrentBucket() {
-                    m_flatElements.clear();
-                    m_elementIndex = 0;
+            m_flatElements.clear();
+            m_elementIndex = 0;
 
-                    while (m_currentBucket < m_pTable->m_bucketCount) {
-                        BucketPtr bucket = m_pTable->m_table[m_currentBucket].getData();
+            while (m_currentBucket < m_pTable->m_bucketCount) {
+                BucketPtr bucket = m_pTable->m_table[m_currentBucket].getData();
+                if (bucket) {
+                    std::vector<Key> keysInBucket;
+                    bucket->ForEach([&](const Key& keyItem) { keysInBucket.push_back(keyItem); });
 
-                        if (bucket) {
-                            // 1. Recolectamos todas las llaves del balde de forma segura.
-                            // El mutex del AVL se bloqueará y se liberará limpiamente al terminar ForEach.
-                            std::vector<Key> keysInBucket;
-                            bucket->ForEach([&](const Key& keyItem) {
-                                keysInBucket.push_back(keyItem);
-                            });
-
-                            // 2. Ahora que ForEach terminó y liberó el mutex,
-                            // procesamos cada search() uno por uno sin conflictos de concurrencia.
-                            for (const auto& keyItem : keysInBucket) {
-                                auto* node = bucket->search(keyItem);
-                                if (node) {
-                                    m_flatElements.push_back({
-                                        keyItem,
-                                        *reinterpret_cast<Value*>(node->getRef())
-                                    });
-                                }
-                            }
-
-                            // Si encontramos elementos en este balde, detenemos la búsqueda para iterarlos
-                            if (!m_flatElements.empty()) return;
+                    for (const auto& keyItem : keysInBucket) {
+                        auto* node = bucket->search(keyItem);
+                        if (node) {
+                            m_flatElements.push_back({keyItem, *reinterpret_cast<Value*>(node->getRef())});
                         }
-                        m_currentBucket++;
                     }
+                    if (!m_flatElements.empty()) return;
                 }
+                m_currentBucket++;
+            }
+        }
 
     public:
         ConstIterator(const AVLHashTable* table, size_type bucket)
@@ -304,32 +221,21 @@ public:
         }
 
         bool operator!=(const ConstIterator& other) const {
+            if (m_currentBucket >= m_pTable->m_bucketCount && other.m_currentBucket >= other.m_pTable->m_bucketCount) {
+                return false;
+            }
             if (m_currentBucket != other.m_currentBucket) return true;
-            if (m_currentBucket >= m_pTable->m_bucketCount) return false;
             return m_elementIndex != other.m_elementIndex;
         }
     };
 
     ConstIterator begin() const { return ConstIterator(this, 0); }
     ConstIterator end() const   { return ConstIterator(this, m_bucketCount); }
-
-    void printDiagnostics() const {
-        for (size_type i = 0; i < m_bucketCount; ++i) {
-            std::cout << "Bucket [" << i << "]: ";
-            const BucketType* bucket = m_table[i].getData();
-            if (bucket) {
-                bucket->printInOrder();
-            }
-            std::cout << "\n";
-        }
-    }
 };
 
-// ===============================================================
-// OPERADORES DE FLUJO GENERALES
-// ===============================================================
-template<typename K, typename V, typename H, typename HT>
-std::ostream& operator<<(std::ostream& os, const AVLHashTable<K, V, H, HT>& hashTable) {
+// 5. OPERATOR <<
+template<typename VectorTrait, typename Hash>
+std::ostream& operator<<(std::ostream& os, const AVLHashTable<VectorTrait, Hash>& hashTable) {
     os << "{";
     bool first = true;
     for (const auto& item : hashTable) {
@@ -341,15 +247,16 @@ std::ostream& operator<<(std::ostream& os, const AVLHashTable<K, V, H, HT>& hash
     return os;
 }
 
-template<typename K, typename V, typename H, typename HT>
-std::istream& operator>>(std::istream& is, AVLHashTable<K, V, H, HT>& hashTable) {
-    K key; V value;
-    while (is >> key >> value) {
-        hashTable.insert(key, value);
+// 6. OPERATOR >>
+template<typename VectorTrait, typename Hash>
+std::istream& operator>>(std::istream& is, AVLHashTable<VectorTrait, Hash>& hashTable) {
+    typename VectorTrait::key_type key;
+    typename VectorTrait::mapped_type value;
+    if (is >> key >> value) {
+        hashTable[key] = value; // Usa directamente el operator[] que ya tenemos
     }
     return is;
 }
 
 void DemoHash();
-
 #endif // __AVLTREE_HASHTABLE_H__

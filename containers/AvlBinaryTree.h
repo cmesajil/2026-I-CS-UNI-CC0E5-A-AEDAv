@@ -8,7 +8,7 @@
 #include <iostream>
 
 // 1. El nodo recibe T y un HeightType
-template<typename T, typename HeightType = T1>
+template<typename T, typename HeightType = size_t>
 struct AVLNode : public BinaryTreeNodeBase<T, AVLNode<T, HeightType>>
 {
     using Base = BinaryTreeNodeBase<T, AVLNode<T, HeightType>>;
@@ -41,9 +41,9 @@ std::ostream& operator<<(std::ostream& os, const AVLNode<T, H>& node)
 
 // 2. El Trait define explícitamente las políticas de tipos
 template<typename T>
-struct AVLAscendingTrait : public BaseTrait<AVLNode<T, T1>, std::less<T>>
+struct AVLAscendingTrait : public BaseTrait<AVLNode<T, size_t>, std::less<T>>
 {
-    using height_type = T1;
+    using height_type = size_t;
 };
 
 // 3. El árbol se adapta al Trait usando Getters y Setters de la clase base

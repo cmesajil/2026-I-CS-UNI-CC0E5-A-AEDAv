@@ -300,7 +300,7 @@ public:
 
     template <typename Func, typename... Args>
     void ForEach(Func func, Args &&... args) {
-        unique_lock<shared_mutex> lock(m_mtx);
+        std::shared_lock<std::shared_mutex> lock(m_mtx);
         if (m_pRoot == nullptr) return;
         for(auto& item : *this) func(item, std::forward<Args>(args)...);
     }

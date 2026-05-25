@@ -105,51 +105,129 @@ void DemoHeap(){
     is.close();
 }
 
+
+
+// =======================================================
+// DEMO
+// =======================================================
 void DemoHash()
 {
-    std::cout << "=== 1. PRUEBA DE CONSTRUCTOR Y OPERATOR [] ===\n";
-    // Crear una tabla hash con 5 baldes iniciales para forzar algunas colisiones controladas
-    AVLHashTable<int, std::string> tabla(5);
 
-    // Probamos la inserción usando m[key] = value;
-    tabla[10] = "Diez";
-    tabla[20] = "Veinte"; // Mismo balde hash que 10 si es m_bucketCount=5 (10%5 == 20%5 == 0)
-    tabla[5]  = "Cinco";
-    tabla[3]  = "Tres";
+    // =======================================================
+    // TYPEDEF PARA HACER EL CÓDIGO MÁS LIMPIO
+    // =======================================================
+    using MyTrait = HashBucketsVectorTrait<T1, T1>;
+    using MyHashTable = AVLHashTable<MyTrait>;
 
-    std::cout << "Valor en m[10]: " << tabla[10] << "\n";
-    std::cout << "Valor en m[20]: " << tabla[20] << "\n";
 
-    std::cout << "\n=== 2. PRUEBA DE RECORRIDO RANGED FOR (Structured Bindings) ===\n";
-    // Evaluando: for (const auto& [key, value] : m)
-    for (const auto& [key, value] : tabla) {
-        std::cout << "Clave: " << key << " -> Valor: " << value << "\n";
-    }
+    std::cout << "\n==============================\n";
+       std::cout << " AVL HASH TABLE DEMO\n";
+       std::cout << "==============================\n\n";
 
-    std::cout << "\n=== 3. PRUEBA DE OPERATOR << (Impresión directa de tabla) ===\n";
-    std::cout << "Estructura completa de la Tabla: " << tabla << "\n";
+       // =====================================================
+       // m[5] = 3;
+       // =====================================================
+       MyHashTable m;
 
-    std::cout << "\n=== 4. PRUEBA DE CONSTRUCTORES COPIA Y MOVIMIENTO ===\n";
-    // Probando Constructor copia profunda
-    std::cout << "Clonando la tabla original...\n";
-    AVLHashTable<int, std::string> tablaClon(tabla);
-    std::cout << "Tabla Clonada (Copia): " << tablaClon << "\n";
+       m[1] = 10;
+       m[2] = 20;
+       m[5] = 3;
 
-    // Probando Move Constructor
-    std::cout << "Moviendo recursos a una nueva tabla...\n";
-    AVLHashTable<int, std::string> tablaMovida(std::move(tablaClon));
-    std::cout << "Nueva tabla Destino: " << tablaMovida << "\n";
+       std::cout << "Tabla original:\n";
+       std::cout << m << "\n\n";
 
-    std::cout << "\n=== 5. PRUEBA DE OPERATOR >> (Deserialización desde Stream) ===\n";
-    std::stringstream streamDeEntrada;
-    // Cargamos un string stream simulando una entrada por consola de pares "Key Value"
-    streamDeEntrada << "15 Quince 42 Respuesta 7 Siete";
+       // =====================================================
+       // Constructor copia
+       // =====================================================
+       MyHashTable copyTable(m);
 
-    AVLHashTable<int, std::string> tablaStream(7);
-    streamDeEntrada >> tablaStream;
+       std::cout << "Copia creada con constructor copia:\n";
+       std::cout << copyTable << "\n\n";
 
-    std::cout << "Tabla poblada mediante operador >>:\n" << tablaStream << "\n";
-    std::cout << "\n=== FIN DE LA DEMO ===\n";
+       // Verificamos independencia
+       copyTable[1] = 999;
+
+       std::cout << "Original:\n";
+       std::cout << m << "\n";
+
+       std::cout << "Copia modificada:\n";
+       std::cout << copyTable << "\n\n";
+
+       // =====================================================
+       // Move constructor
+       // =====================================================
+       MyHashTable movedTable(std::move(copyTable));
+
+       std::cout << "Tabla movida:\n";
+       std::cout << movedTable << "\n\n";
+
+       // =====================================================
+       // for (const auto& [key, value] : m)
+       // =====================================================
+       std::cout << "Recorrido con structured bindings:\n";
+
+       for (const auto& [key, value] : movedTable)
+       {
+           std::cout
+               << "Key: " << key
+               << " -> Value: " << value
+               << "\n";
+       }
+
+       std::cout << "\n";
+
+       // =====================================================
+       // operator<<
+       // =====================================================
+       std::cout << "operator<<\n";
+       std::cout << movedTable << "\n\n";
+
+
+       // =====================================================
+          // operator<<  -> GUARDAR EN ARCHIVO
+          // =====================================================
+          std::ofstream of("data.txt");
+
+          if (!of)
+          {
+              std::cerr << "Error creando archivo\n";
+              return;
+          }
+
+          // Guardamos manualmente como:
+          // key value
+          for (const auto& [key, value] : movedTable)
+          {
+              of << key << " " << value << "\n";
+          }
+
+          of.close();
+
+          std::cout << "Datos guardados en data.txt\n\n";
+
+          // =====================================================
+          // operator>>  -> LEER DESDE ARCHIVO
+          // =====================================================
+          MyHashTable loadedTable;
+
+          std::ifstream in("data.txt");
+
+          if (!in)
+          {
+              std::cerr << "Error abriendo archivo\n";
+              return;
+          }
+
+          while (in)
+          {
+              in >> loadedTable;
+          }
+
+          in.close();
+
+          std::cout << "Tabla cargada desde archivo:\n";
+          std::cout << loadedTable << "\n\n";
+
 }
 
 void DemoConcurrentVector(){
