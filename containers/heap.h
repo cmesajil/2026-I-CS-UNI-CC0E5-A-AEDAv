@@ -1,4 +1,4 @@
-    #ifndef __HEAP_H__
+#ifndef __HEAP_H__
     #define __HEAP_H__
 
     #include <iostream>
@@ -38,11 +38,6 @@
         value_type getData() const { return m_data; }
         Ref getRef() const { return m_ref; }
 
-        // Compara este nodo con otro delegando la lógica a m_comp
-        bool operator<(const HeapNode& other) const {
-            return m_comp(m_data, other.m_data);
-        }
-
         friend std::ostream& operator<<(std::ostream& os, const HeapNode& node) {
                 // Formato limpio: ej. "5 (Ref: 0x7ffd)" o simplemente "5" si prefieres solo el dato
                 os << "(" << node.m_data << "," << node.m_ref << ")";;
@@ -69,11 +64,39 @@
         Vector<Trait> m_vec;
         Comp          m_comp;
         mutable shared_mutex m_mtx;
+
+        void heapifyUp(size_t index){
+            if (index == 0) return; // Caso base implícito de forma segura
+
+            size_t parent = (index - 1) / 2;
+            if (m_comp(m_vec[index].getData(), m_vec[parent].getData())) {
+                        std::swap(m_vec[index], m_vec[parent]);
+                        heapifyUp(parent);
+                    }
+        }
+
+
+        void heapifyDown(size_t index){
+            size_t left    = 2 * index + 1;
+            size_t right   = 2 * index + 2;
+            size_t smallest = index;
+
+            // Usamos el comparador m_comp directamente sobre los datos de los nodos
+                if (left < m_vec.size() && m_comp(m_vec[left].getData(), m_vec[smallest].getData())){
+                    smallest = left;
+                }
+                if (right < m_vec.size() && m_comp(m_vec[right].getData(), m_vec[smallest].getData())){
+                    smallest = right;
+                }
+                if (smallest != index){
+                    std::swap(m_vec[index], m_vec[smallest]);
+                    heapifyDown(smallest);
+                }
+        }
     public:
         Heap() : m_vec(), m_comp() {}
         Heap(size_t capacity) : m_vec(capacity), m_comp() {}
         ~Heap() {}
-        Vector<Trait>* getVector() { return &m_vec; }
         bool isEmpty() {
             //std::shared_lock<std::shared_mutex> lock(m_mtx); ya lo tiene el vector
             return m_vec.empty();
@@ -87,32 +110,6 @@
             return m_vec.toString();
         }
 
-        void heapifyUp(size_t index){
-            if (index == 0) return; // Caso base implícito de forma segura
-
-            size_t parent = (index - 1) / 2;
-            if (m_vec[index] < m_vec[parent]) {
-                        std::swap(m_vec[index], m_vec[parent]);
-                        heapifyUp(parent);
-                    }
-        }
-        void heapifyDown(size_t index){
-            size_t left    = 2 * index + 1;
-            size_t right   = 2 * index + 2;
-            size_t smallest = index;
-
-            // Usamos el operador sobrecargado uniformemente
-                if (left < m_vec.size() && m_vec[left] < m_vec[smallest]){
-                    smallest = left;
-                }
-                if (right < m_vec.size() && m_vec[right] < m_vec[smallest]){
-                    smallest = right;
-                }
-                if (smallest != index){
-                    std::swap(m_vec[index], m_vec[smallest]);
-                    heapifyDown(smallest);
-                }
-        }
 
         void insert(value_type value, Ref ref){
             unique_lock<shared_mutex> lock(m_mtx);
@@ -121,14 +118,18 @@
         }
 
         // Extrae el elemento de mayor o menor prioridad (depende del heap)
-        void extract() {
+        Node extract() {
             unique_lock<shared_mutex> lock(m_mtx);
-            if (m_vec.empty()) return;
+            if (m_vec.empty()) return Node(value_type(), Ref());
 
+            Node result = m_vec[0];
             m_vec[0] = std::move(m_vec[m_vec.size() - 1]);
             // Hacemos el pop sin activar otros candados
             m_vec.pop_back_unsafe();
-            heapifyDown(0);
+            if (!m_vec.empty()) {
+                heapifyDown(0);
+            }
+            return result;
         }
 
         // Obtiene el elemento de mayor o menor prioridad (depende del heap)

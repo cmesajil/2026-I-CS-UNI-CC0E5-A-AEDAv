@@ -105,6 +105,13 @@
         Node   *m_data;
         mutable shared_mutex m_mtx;
         void    resize();
+
+        void pop_back_unsafe() {
+            // Sin candados. Diseñada solo para estructuras hijas como el Heap que ya están protegidas.
+            if (m_size > 0) {
+                m_size--;
+            }
+        }
     public:
         Vector(size_t capacity = 10);
         virtual ~Vector();
@@ -245,12 +252,7 @@
         }
 
 
-        void pop_back_unsafe() {
-            // Sin candados. Diseñada solo para estructuras hijas como el Heap que ya están protegidas.
-            if (m_size > 0) {
-                m_size--;
-            }
-        }
+
     };
 
 

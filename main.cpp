@@ -6,7 +6,7 @@
 void ListsDemo();
 int main(){
     //DemoVector();
-    //DemoHeap();
+    DemoHeap();
     //DemoConcurrentVector();
     //ListsDemo();
     DemoHash();
