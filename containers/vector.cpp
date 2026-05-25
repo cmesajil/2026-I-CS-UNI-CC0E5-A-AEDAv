@@ -131,7 +131,19 @@ void DemoHash()
 
        m[1] = 10;
        m[2] = 20;
-       m[5] = 3;
+
+
+    // Para meter todos tus datos en el mismo "bucket" (casillero 5) sin que se pisen,
+        // usamos claves que terminen en 5 (asumiendo Hash por residuo, ej: clave % 10)
+        m[5]   = 8;  // Cae en el casillero 5
+        m[15]  = 3;  // Colisiona en el casillero 5 -> ¡Entra el Heap!
+        m[25]  = 10; // Colisiona en el casillero 5
+        m[35]  = 1;  // Colisiona en el casillero 5
+        m[45]  = 6;  // Colisiona en el casillero 5
+        m[55]  = 14; // Colisiona en el casillero 5
+        m[65]  = 4;  // Colisiona en el casillero 5
+        m[75]  = 7;  // Colisiona en el casillero 5
+        m[85]  = 5;  // Colisiona en el casillero 5
 
        std::cout << "Tabla original:\n";
        std::cout << m << "\n\n";

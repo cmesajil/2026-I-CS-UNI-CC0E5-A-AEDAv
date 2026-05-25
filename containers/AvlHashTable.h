@@ -70,11 +70,13 @@ public:
     using TableType    = Vector<VectorTrait>;
     using size_type    = std::size_t;
     using KeyValuePair = AVLHashKeyValuePair<Key, Value>;
+    mutable shared_mutex m_mtx;
 
 private:
     size_type     m_bucketCount;
     TableType     m_table;
     Hash          m_hashFunction;
+
 
     size_type getBucketIndex(const Key& key) const {
         return m_hashFunction(key) % m_bucketCount;
@@ -88,12 +90,14 @@ public:
     explicit AVLHashTable(size_type bucketCount = 101)
         : m_bucketCount(bucketCount), m_table(bucketCount)
     {
+        unique_lock<shared_mutex> lock(m_mtx);
         for (size_type i = 0; i < m_bucketCount; ++i) {
             setBucketAt(i, new BucketType());
         }
     }
 
     ~AVLHashTable() {
+        unique_lock<shared_mutex> lock(m_mtx);
         for (size_type i = 0; i < m_bucketCount; ++i) {
             BucketPtr bucket = m_table[i].getData();
             if (bucket) {
@@ -116,6 +120,7 @@ public:
           m_table(other.m_bucketCount),
           m_hashFunction(other.m_hashFunction)
     {
+        shared_lock<shared_mutex> lock(other.m_mtx);
         for (size_type i = 0; i < m_bucketCount; ++i) {
             setBucketAt(i, new BucketType());
         }
@@ -148,6 +153,7 @@ public:
           m_table(std::move(other.m_table)),
           m_hashFunction(std::move(other.m_hashFunction))
     {
+        unique_lock<shared_mutex> lockOther(other.m_mtx);
         for (size_type i = 0; i < other.m_bucketCount; ++i) {
             other.setBucketAt(i, nullptr);
         }
@@ -155,6 +161,7 @@ public:
 
     // 3. ASIGNACIÓN ACCESO m[5] = 3
     Value& operator[](const Key& key) {
+        unique_lock<shared_mutex> lockOther(m_mtx);
         size_type index = getBucketIndex(key);
         BucketType& avlBucket = *(m_table[index].getData());
         auto* node = avlBucket.search(key);
@@ -172,6 +179,7 @@ public:
     }
 
     // 4. CONST_ITERATOR PARA SOPORTAR: for (const auto& [key, value] : m)
+    // for actuales corren "en paralelo", C++ necesita que corran "en serie"
     class ConstIterator {
     public:
         const AVLHashTable* m_pTable;
@@ -236,20 +244,22 @@ public:
 // 5. OPERATOR <<
 template<typename VectorTrait, typename Hash>
 std::ostream& operator<<(std::ostream& os, const AVLHashTable<VectorTrait, Hash>& hashTable) {
-    os << "{";
+    std::shared_lock<std::shared_mutex> lock(hashTable.m_mtx);
+    os << "[";
     bool first = true;
     for (const auto& item : hashTable) {
-        if (!first) os << ", ";
-        os << item.key << ": " << item.value;
+        if (!first) os << ",";
+        os << "(" << item.key << "," << item.value << ")";
         first = false;
     }
-    os << "}";
+    os << "]";
     return os;
 }
 
 // 6. OPERATOR >>
 template<typename VectorTrait, typename Hash>
 std::istream& operator>>(std::istream& is, AVLHashTable<VectorTrait, Hash>& hashTable) {
+    //std::unique_lock<std::shared_mutex> lock(hashTable.m_mtx); ya lo tiene hashtable
     typename VectorTrait::key_type key;
     typename VectorTrait::mapped_type value;
     if (is >> key >> value) {
