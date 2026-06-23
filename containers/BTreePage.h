@@ -10,6 +10,8 @@
 #include "../types.h"
 #include "traits.h"
 #include "general_iterator.h"
+#include <shared_mutex>
+#include <mutex>
 
 template <typename Trait>
 class BTree;
@@ -173,6 +175,7 @@ protected:
     vector<ObjectInfo> m_Keys;
     vector<BTPage *>   m_SubPages;
     size_t             m_KeyCount;
+    mutable std::shared_mutex m_pageMutex;
 
     void  Create();
     void  Reset ();
@@ -223,28 +226,30 @@ public:
 
     // --- VARIÁDICOS COMPLETOS ---
     template <typename Func, typename... Args>
-    void forEach(size_t level, Func func, Args&&... args) {
-        std::vector<std::future<void>> futures;
-        for (size_t i = 0; i < m_KeyCount; ++i) {
-            if (m_SubPages[i]) {
-                futures.push_back(std::async(std::launch::async, [this, i, level, &func, &args...]() {
+        void forEach(size_t level, Func func, Args&&... args) {
+            // Un shared_lock permite que múltiples hilos lean esta página simultáneamente
+            std::shared_lock<std::shared_mutex> lock(m_pageMutex);
+
+            for (size_t i = 0; i < m_KeyCount; ++i) {
+                // Liberamos el candado temporalmente antes de bajar al hijo para evitar Deadlocks recursivos
+                lock.unlock();
+                if (m_SubPages[i]) {
                     m_SubPages[i]->forEach(level + 1, func, std::forward<Args>(args)...);
-                }));
+                }
+                lock.lock(); // Volvemos a bloquear para leer m_Keys de esta página de forma segura
+
+                func(m_Keys[i], level, std::forward<Args>(args)...);
             }
-            func(m_Keys[i], level, std::forward<Args>(args)...);
-        }
-        if (m_SubPages[m_KeyCount]) {
-            futures.push_back(std::async(std::launch::async, [this, level, &func, &args...]() {
+
+            if (m_SubPages[m_KeyCount]) {
+                lock.unlock();
                 m_SubPages[m_KeyCount]->forEach(level + 1, func, std::forward<Args>(args)...);
-            }));
+            }
         }
-        for (auto& f : futures) {
-            f.get();
-        }
-    }
 
     template <typename Func, typename... Args>
     ObjectInfo* firstThat(size_t level, Func func, Args&&... args) {
+        std::shared_lock<std::shared_mutex> lock(m_pageMutex);
         for (size_t i = 0; i < m_KeyCount; ++i) {
             if (m_SubPages[i])
                 if (ObjectInfo* found = m_SubPages[i]->firstThat(level + 1, func, std::forward<Args>(args)...))
@@ -258,6 +263,7 @@ public:
 
     template <typename Func, typename... Args>
     void forEachPage(size_t level, Func func, Args&&... args) {
+        std::shared_lock<std::shared_mutex> lock(m_pageMutex);
         func(m_KeyCount, level, std::forward<Args>(args)...);
         for (size_t i = 0; i <= m_KeyCount; ++i)
             if (m_SubPages[i]) m_SubPages[i]->forEachPage(level + 1, func, std::forward<Args>(args)...);
