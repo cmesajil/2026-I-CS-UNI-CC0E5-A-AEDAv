@@ -2,87 +2,133 @@
 #define BTREE_H
 
 #include <iostream>
+#include "traits.h"
 #include "BTreePage.h"
 
-#define DEFAULT_BTREE_ORDER 3
+template <typename _Node, size_t MaxKeys, typename _Comp, bool Unique = true>
+struct BTreeTrait : public BaseTrait<_Node, _Comp> {
+    static constexpr size_t max_keys = MaxKeys;
+    static constexpr bool is_unique = Unique;
+
+    using Node       = _Node;
+    using value_type = typename _Node::value_type;
+};
+
+template <typename T, typename Comp = std::less<T>>
+struct Tree23TraitAscending :
+    public BTreeTrait<BTreeNodeItem<T>, 2, Comp, true> {};
+
+template <typename T, typename Comp = std::greater<T>>
+struct Tree23TraitDescending :
+    public BTreeTrait<BTreeNodeItem<T>, 2, Comp, true> {};
+
+template <typename T, typename Comp = std::less<T>>
+struct Tree34TraitMulti :
+    public BTreeTrait<BTreeNodeItem<T>, 3, Comp, false> {};
 
 template <typename Trait>
 class BTree {
 public:
-    // Reemplazos de typedef tradicionales a "using" de C++ Moderno
-    using Page           = CBTreePage<Trait>;
-    using PagePtr        = Page*;
-    using BTNode         = CBTreePage<Trait>;
-    using ObjectInfo     = typename BTNode::ObjectInfo;
-    using Entry          = typename Trait::Node;
-    using Node           = Entry;
-    using value_type     = typename Trait::value_type;
+    using Page       = CBTreePage<Trait>;
+    using PagePtr    = Page*;
+    using ObjectInfo = typename Page::ObjectInfo;
+    using Node = typename Page::ObjectInfo;
 
-    using lpfnForEach2   = typename BTNode::lpfnForEach2;
-    using lpfnForEach3   = typename BTNode::lpfnForEach3;
-    using lpfnFirstThat2 = typename BTNode::lpfnFirstThat2;
-    using lpfnFirstThat3 = typename BTNode::lpfnFirstThat3;
+    using node_type  = typename Trait::Node;
+    using value_type = typename Trait::value_type;
+    using comparator = typename Trait::Comp;
+
 
 private:
-    Page* m_root = nullptr;
+    PagePtr m_root = nullptr;
+    comparator m_comp{};
 
 protected:
-    BTNode m_Root; // Firma heredada opcional
-    size_t m_Height;
-    size_t m_Order;
-    size_t m_NumKeys;
-    bool   m_Unique;
+    size_t m_Height = 0;
+    size_t m_NumKeys = 0;
 
 public:
-    BTree(size_t order = DEFAULT_BTREE_ORDER, bool unique = true)
-        : m_root(nullptr), m_Height(0), m_Order(order), m_NumKeys(0), m_Unique(unique) {}
-    ~BTree() {}
+    BTree() = default;
 
-    // Métodos clásicos preservados para futura implementación externa
-    bool      Insert (const value_type key, const Ref ObjID) {
-        if (!m_root) m_root = new Page();
-        if (m_root->get_size() < Trait::max_keys) {
-            m_root->get_item(m_root->get_size()) = Entry(key, ObjID);
-            m_root->NumberOfKeys()++;
-            m_NumKeys++;
-        }
-        return true;
+    ~BTree() {
+        if (m_root)
+            m_root->Destroy();
     }
-    bool      Remove (const value_type key, const Ref ObjID) { return false; }
-    Ref       Search (const value_type key) { return 0; }
-    size_t    size()     { return m_NumKeys; }
-    size_t    height()   { return m_Height; }
-    size_t    GetOrder() { return m_Order; }
 
-    void      Print (ostream &os);
+    bool Insert(const value_type key, const Ref ObjID);
+    bool Remove(const value_type key, const Ref ObjID);
 
-    // Soporte clásico con callbacks tradicionales de tus firmas anteriores
-    void        ForEach(lpfnForEach2 lpfn, void *pExtra1);
-    void        ForEach(lpfnForEach3 lpfn, void *pExtra1, void *pExtra2);
-    ObjectInfo* FirstThat(lpfnFirstThat2 lpfn, void *pExtra1);
-    ObjectInfo* FirstThat(lpfnFirstThat3 lpfn, void *pExtra1, void *pExtra2);
+    Ref Search(const value_type key);
 
-public:
-    // --- ENVOLTURAS VARIÁDICAS MODERNAS CON PERFECT FORWARDING ---
+    size_t size() const {
+        return m_NumKeys;
+    }
+
+    size_t height() const {
+        return m_Height;
+    }
+
+    constexpr size_t GetOrder() const {
+        return Trait::max_keys;
+    }
+
+    constexpr bool IsUnique() const {
+        return Trait::is_unique;
+    }
+
     template <typename Func, typename... Args>
     void forEach(Func&& func, Args&&... args) {
         if (m_root) {
-            m_root->forEach(0, std::forward<Func>(func), std::forward<Args>(args)...);
+            m_root->forEach(
+                0,
+                std::forward<Func>(func),
+                std::forward<Args>(args)...);
         }
     }
 
     template <typename Func, typename... Args>
-    Entry* firstThat(Func&& func, Args&&... args) {
+    ObjectInfo* firstThat(Func&& func, Args&&... args) {
         if (m_root) {
-            return m_root->firstThat(0, std::forward<Func>(func), std::forward<Args>(args)...);
+            return m_root->firstThat(
+                0,
+                std::forward<Func>(func),
+                std::forward<Args>(args)...);
         }
         return nullptr;
     }
 
-    // --- ENLACE CON EL ITERADOR (Soporta Range-based for loops) ---
     using iterator = BTreeForwardIterator<BTree<Trait>>;
-    iterator begin() { return iterator(this, m_root); }
-    iterator end()   { return iterator(this); }
+
+    iterator begin() {
+        return iterator(this, m_root);
+    }
+
+    iterator end() {
+        return iterator(this);
+    }
 };
+
+template <typename Trait>
+bool BTree<Trait>::Insert(const value_type key, const Ref ObjID)
+{
+    if (m_root == nullptr) {
+        m_root = new Page();
+        m_Height = 1;
+    }
+
+    bt_ErrorCode error = m_root->Insert(key, ObjID);
+
+    if (error == bt_duplicate)
+        return false;
+
+    ++m_NumKeys;
+
+    if (error == bt_overflow) {
+        m_root->SplitRoot();
+        ++m_Height;
+    }
+
+    return true;
+}
 
 #endif
