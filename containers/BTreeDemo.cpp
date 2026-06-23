@@ -26,13 +26,13 @@ void DemoBTree() {
     cout << "Letras en el arbol: " << letterCount << "\n";
 
     // 3. FirstThat Variadic buscando un objetivo tipo T3 sin casteo manual
-    T3 target = 'M';
+    T3 target = 'Z';
     auto* entry = bt.firstThat([](BTree<MyTrait>::Entry& e, size_t level, T3 t) {
         return e.GetData() == t;
     }, target);
 
     if (entry) {
-        cout << "firstThat('M') -> Encontrado con Ref: " << entry->GetRef() << "\n";
+        cout << "firstThat('Z') -> Encontrado con Ref: " << entry->GetRef() << "\n";
     }
 
     // 4. Bucle for-range clásico usando tu iterador in-order

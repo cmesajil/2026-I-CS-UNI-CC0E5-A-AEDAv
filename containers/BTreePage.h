@@ -261,13 +261,7 @@ public:
         return nullptr;
     }
 
-    template <typename Func, typename... Args>
-    void forEachPage(size_t level, Func func, Args&&... args) {
-        std::shared_lock<std::shared_mutex> lock(m_pageMutex);
-        func(m_KeyCount, level, std::forward<Args>(args)...);
-        for (size_t i = 0; i <= m_KeyCount; ++i)
-            if (m_SubPages[i]) m_SubPages[i]->forEachPage(level + 1, func, std::forward<Args>(args)...);
-    }
+
 };
 
 #endif

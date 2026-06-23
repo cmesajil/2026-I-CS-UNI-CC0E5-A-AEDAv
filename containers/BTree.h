@@ -79,13 +79,6 @@ public:
         return nullptr;
     }
 
-    template <typename Func, typename... Args>
-    void forEachPage(Func&& func, Args&&... args) {
-        if (m_root) {
-            m_root->forEachPage(0, std::forward<Func>(func), std::forward<Args>(args)...);
-        }
-    }
-
     // --- ENLACE CON EL ITERADOR (Soporta Range-based for loops) ---
     using iterator = BTreeForwardIterator<BTree<Trait>>;
     iterator begin() { return iterator(this, m_root); }
