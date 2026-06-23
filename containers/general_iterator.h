@@ -28,6 +28,7 @@ public:
           }
     Node *getNode() const { return m_pNode; }
     friend bool operator==(const IteratorBase &a, const IteratorBase &b) { return a.getNode() == b.getNode(); }
+    friend bool operator!=(const IteratorBase &a, const IteratorBase &b) { return a.getNode() != b.getNode(); }
     typename Container::value_type &operator*(){
         return m_pNode->getDataRef();
     }
@@ -36,6 +37,7 @@ public:
             return m_pNode;
         }
 };
+
 
 
 

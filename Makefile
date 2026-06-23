@@ -6,7 +6,7 @@ TARGET = main
 SRCS = main.cpp \
 	   containers/ListsDemo.cpp \
 	   containers/vector.cpp \
-	   containers/BTree.cpp
+	   containers/BTreeDemo.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
