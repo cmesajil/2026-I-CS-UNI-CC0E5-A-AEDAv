@@ -18,5 +18,6 @@ using Type = int;
 
 using T2  = std::string;
 using Ref = long;
+using T3  = char;
 
 #endif // __TYPES_H__
