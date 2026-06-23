@@ -259,12 +259,13 @@
     template <typename Trait>
     bool CBTreePage<Trait>::SplitRoot()
     {
+        std::unique_lock<std::shared_mutex> lock(m_pageMutex);
         BTPage* leftChild = new BTPage();
         BTPage* rightChild = new BTPage();
-        
+
         size_t mid = m_KeyCount / 2;
         ObjectInfo promoted = m_Keys[mid];
-        
+
         leftChild->m_KeyCount = mid;
         for (size_t i = 0; i < mid; ++i) {
             leftChild->m_Keys[i] = m_Keys[i];
@@ -274,7 +275,7 @@
                 leftChild->m_SubPages[i] = m_SubPages[i];
             }
         }
-        
+
         rightChild->m_KeyCount = m_KeyCount - mid - 1;
         for (size_t i = 0; i < rightChild->m_KeyCount; ++i) {
             rightChild->m_Keys[i] = m_Keys[mid + 1 + i];
@@ -284,13 +285,13 @@
                 rightChild->m_SubPages[i] = m_SubPages[mid + 1 + i];
             }
         }
-        
+
         clear();
         m_Keys[0] = promoted;
         m_SubPages[0] = leftChild;
         m_SubPages[1] = rightChild;
         m_KeyCount = 1;
-        
+
         return true;
     }
 
@@ -317,13 +318,14 @@
     template <typename Trait>
     bt_ErrorCode CBTreePage<Trait>::Insert(const value_type &m_data, const Ref m_ref)
     {
+        std::unique_lock<std::shared_mutex> lock(m_pageMutex);
         size_t i = 0;
         comparator comp;
         // Encuentra la posición para insertar o descender
         while (i < m_KeyCount && comp(m_Keys[i].GetData(), m_data)) {
             i++;
         }
-        
+
         if (i < m_KeyCount && m_Keys[i].GetData() == m_data) {
             return bt_duplicate;
         }
@@ -335,7 +337,7 @@
             }
             m_Keys[i] = ObjectInfo(m_data, m_ref);
             m_KeyCount++;
-            
+
             if (m_KeyCount > Trait::max_keys) {
                 return bt_overflow;
             }
@@ -358,10 +360,10 @@
     {
         BTPage* child = m_SubPages[pos];
         BTPage* newChild = new BTPage();
-        
+
         size_t mid = child->m_KeyCount / 2;
         ObjectInfo promoted = child->m_Keys[mid];
-        
+
         newChild->m_KeyCount = child->m_KeyCount - mid - 1;
         for (size_t i = 0; i < newChild->m_KeyCount; ++i) {
             newChild->m_Keys[i] = child->m_Keys[mid + 1 + i];
@@ -373,7 +375,7 @@
             }
         }
         child->m_KeyCount = mid;
-        
+
         for (size_t i = m_KeyCount; i > pos; --i) {
             m_Keys[i] = m_Keys[i - 1];
             m_SubPages[i + 1] = m_SubPages[i];
@@ -385,10 +387,10 @@
 
     template <typename Trait>
     bt_ErrorCode CBTreePage<Trait>::Remove(const value_type &m_data, const Ref m_ref) { return bt_ok; }
-    
+
     template <typename Trait>
     bool CBTreePage<Trait>::Search(const value_type &m_data, size_t &m_ref) { return false; }
-    
+
     template <typename Trait>
     void CBTreePage<Trait>::Print(ostream &os) {}
 
